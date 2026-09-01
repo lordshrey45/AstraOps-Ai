@@ -33,7 +33,22 @@ Traditional systems often provide raw information without sufficient intelligenc
 
 AstraOps AI acts as an intelligent operational layer that combines:
 
-**Data → Processing → AI → Insights → Action**
+User
+ ↓
+Web Interface
+ ↓
+Flask Application
+ ↓
+Routes / APIs
+ ↓
+Services
+ ├── Gemini AI
+ ├── Weather
+ ├── Location
+ ├── Translation
+ └── TTS
+ ↓
+SQLite Database
 
 The system helps users interact with operational information through an intuitive interface and an AI-powered assistant.
 
@@ -140,33 +155,35 @@ The interface focuses on:
 AstraOps AI follows a modular architecture consisting of multiple layers.
 
 ```text
-                    ┌───────────────────────┐
-                    │       User            │
-                    │ Web / Voice Interface │
-                    └───────────┬───────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │     Frontend Layer    │
-                    │   User Interaction   │
-                    └───────────┬───────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │      API Layer        │
-                    │ Authentication / APIs │
-                    └───────────┬───────────┘
-                                │
-                 ┌──────────────┼──────────────┐
-                 ▼              ▼              ▼
-        ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
-        │ Data Layer   │ │ AI Engine    │ │ Automation   │
-        │ Database     │ │ LLM / NLP    │ │ Workflows    │
-        └──────────────┘ └──────┬───────┘ └──────────────┘
-                                │
-                                ▼
-                    ┌───────────────────────┐
-                    │ Intelligent Insights  │
-                    │ Recommendations       │
-                    │ & Responses           │
-                    └───────────────────────┘
+                    ┌─────────────────────┐
+                    │       Users         │
+                    │ Pilgrim / Volunteer │
+                    │      / Admin        │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Web Interface     │
+                    │ HTML / CSS / JS      │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    Flask Backend    │
+                    │     Blueprints      │
+                    └──────────┬──────────┘
+                               │
+          ┌────────────────────┼────────────────────┐
+          ▼                    ▼                    ▼
+   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+   │ AI Services │     │ Safety      │     │ Operations  │
+   │ Gemini      │     │ SOS         │     │ Facilities  │
+   │ TTS         │     │ Location    │     │ Volunteers  │
+   └─────────────┘     └─────────────┘     │ Routes      │
+                                           │ Weather     │
+                                           └──────┬──────┘
+                                                  │
+                                                  ▼
+                                          ┌────────────────┐
+                                          │ SQLite Database│
+                                          └────────────────┘
