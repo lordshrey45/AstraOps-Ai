@@ -1,0 +1,80 @@
+{% extends "admin/base.html" %}
+
+{% block title %}System Monitoring{% endblock %}
+
+{% block admin_content %}
+<!-- Header & Overall System Health Status Banner -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-cpu-fill text-info me-2"></i>System Monitoring &amp; Operational Reliability
+        </h2>
+        <p class="text-muted mb-0">
+            Real-time health verification and operational status across core database, API, and spatial services.
+        </p>
+    </div>
+    
+    <!-- Last Check Timestamp Pill -->
+    <div class="text-muted small bg-white p-2 px-3 rounded shadow-sm border">
+        <i class="bi bi-clock-history me-1 text-primary"></i>Last Check: <strong>{{ system_summary.last_check_time }}</strong>
+    </div>
+</div>
+
+<!-- Overall System Status Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="p-3 rounded-circle {% if system_summary.overall_status == 'OPERATIONAL' %}bg-success-subtle text-success{% elif system_summary.overall_status == 'WARNING' %}bg-warning-subtle text-warning{% else %}bg-danger-subtle text-danger{% endif %}">
+                {% if system_summary.overall_status == 'OPERATIONAL' %}
+                <i class="bi bi-check-circle-fill display-5"></i>
+                {% elif system_summary.overall_status == 'WARNING' %}
+                <i class="bi bi-exclamation-triangle-fill display-5"></i>
+                {% else %}
+                <i class="bi bi-x-circle-fill display-5"></i>
+                {% endif %}
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <h4 class="fw-bold text-dark mb-0">System Status:</h4>
+                    <span class="badge {{ system_summary.overall_badge }} fs-5 px-3 py-1">
+                        {{ system_summary.overall_status }}
+                    </span>
+                </div>
+                <p class="text-secondary mb-0">{{ system_summary.overall_desc }}</p>
+            </div>
+        </div>
+        
+        <a href="{{ url_for('admin.admin_monitoring') }}" class="btn btn-outline-primary font-monospace fw-bold">
+            <i class="bi bi-arrow-clockwise me-1"></i> Re-Run Health Checks
+        </a>
+    </div>
+</div>
+
+<!-- 7 Major Service Health Cards Grid -->
+<div class="row g-3 mb-4">
+    {% for key, check in health_checks.items() %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100 p-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi {{ check.icon }} fs-4"></i>
+                    <h6 class="fw-bold text-dark mb-0">{{ check.name }}</h6>
+                </div>
+                <span class="badge {{ check.badge }}">{{ check.status }}</span>
+            </div>
+            <p class="text-secondary small mb-3">{{ check.details }}</p>
+            
+            <!-- Metrics List -->
+            <div class="p-2 bg-light rounded small">
+                {% for label, val in check.metrics.items() %}
+                <div class="d-flex justify-content-between py-1 border-bottom border-light-subtle">
+                    <span class="text-muted">{{ label }}:</span>
+                    <strong class="text-dark font-monospace">{{ val }}</strong>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('nav_home') }}{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section class="hero-section text-center text-white my-4 p-5 rounded-4 shadow">
+    <div class="container py-3">
+        <div class="hero-logo mb-3 mx-auto shadow-sm">
+            <i class="bi bi-geo-alt-fill"></i>
+        </div>
+        <h1 class="display-4 fw-bold mb-2">{{ t('hero_title') }}</h1>
+        <p class="lead mb-4 max-w-600 mx-auto opacity-90">{{ t('hero_subtitle') }}</p>
+        <div class="d-flex flex-wrap justify-content-center gap-3">
+            <a href="/map" class="btn btn-light btn-lg px-4 fw-semibold hero-btn-primary shadow-sm">
+                <i class="bi bi-map-fill me-2"></i> {{ t('start_journey') }}
+            </a>
+            <a href="/chat" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                <i class="bi bi-chat-dots-fill me-2"></i> {{ t('ask_ai') }}
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Feature Cards Section -->
+<section class="mb-5">
+    <div class="row g-4">
+        <!-- Card 1: Interactive Route Map -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/map" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-saffron-subtle text-wari-saffron mb-3 mx-auto">
+                            <i class="bi bi-map-fill"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-wari-dark">{{ t('feature_map_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_map_desc') }}</p>
+                        <span class="btn btn-outline-wari btn-sm mt-2">{{ t('view_map') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 2: AI Assistant -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/chat" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-gold-subtle text-wari-gold mb-3 mx-auto">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-wari-dark">{{ t('feature_ai_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_ai_desc') }}</p>
+                        <span class="btn btn-outline-wari btn-sm mt-2">{{ t('ask_ai') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 3: Nearby Facilities -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/facilities" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-maroon-subtle text-wari-maroon mb-3 mx-auto">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-wari-dark">{{ t('feature_facilities_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_facilities_desc') }}</p>
+                        <span class="btn btn-outline-wari btn-sm mt-2">{{ t('view_facilities') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 4: Daily Schedule -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/schedule" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-gold-subtle text-wari-gold mb-3 mx-auto">
+                            <i class="bi bi-calendar3"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-wari-dark">{{ t('feature_schedule_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_schedule_desc') }}</p>
+                        <span class="btn btn-outline-wari btn-sm mt-2">{{ t('view_schedule') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 5: Weather Forecast -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/weather" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-saffron-subtle text-wari-saffron mb-3 mx-auto">
+                            <i class="bi bi-cloud-sun-fill"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-wari-dark">{{ t('feature_weather_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_weather_desc') }}</p>
+                        <span class="btn btn-outline-wari btn-sm mt-2">{{ t('view_forecast') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Card 6: Emergency SOS -->
+        <div class="col-md-6 col-lg-4">
+            <a href="/sos" class="text-decoration-none">
+                <div class="card card-wari h-100 feature-card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        <div class="feature-icon bg-maroon-subtle text-danger mb-3 mx-auto">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                        </div>
+                        <h5 class="card-title fw-bold text-danger">{{ t('feature_sos_title') }}</h5>
+                        <p class="card-text text-muted small">{{ t('feature_sos_desc') }}</p>
+                        <span class="btn btn-danger btn-sm mt-2">{{ t('get_help') }}</span>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Today's Overview Section -->
+<section class="mb-5">
+    <h3 class="section-title mb-4 border-start border-4 border-warning ps-3 fw-bold">{{ t('todays_overview') }}</h3>
+
+    <div class="row g-3">
+        <!-- Today's Halt Card -->
+        <div class="col-md-4">
+            <div class="card card-wari overview-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="overview-icon text-wari-saffron me-3">
+                        <i class="bi bi-geo-alt-fill"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted text-uppercase fw-semibold d-block">{{ t('todays_halt') }}</small>
+                        <span class="h4 fw-bold text-wari-dark mb-0 d-block">{{ overview.halt_village }}</span>
+                        <small class="text-muted">{{ t('day') }} {{ overview.day_number }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="col-md-4">
+            <div class="card card-wari overview-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="overview-icon text-wari-gold me-3">
+                        <i class="bi bi-cloud-sun-fill"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted text-uppercase fw-semibold d-block">{{ t('weather') }}</small>
+                        <span class="h4 fw-bold text-wari-dark mb-0 d-block">{{ overview.weather_temp }}°C</span>
+                        <small class="text-muted">{{ overview.weather_condition }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distance Remaining Card -->
+        <div class="col-md-4">
+            <div class="card card-wari overview-card h-100 border-0 shadow-sm">
+                <div class="card-body p-4 d-flex align-items-center">
+                    <div class="overview-icon text-wari-maroon me-3">
+                        <i class="bi bi-signpost-2-fill"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted text-uppercase fw-semibold d-block">{{ t('distance_remaining') }}</small>
+                        <span class="h4 fw-bold text-wari-dark mb-0 d-block">{{ overview.distance_remaining }}</span>
+                        <small class="text-muted">To {{ overview.next_halt }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Announcements Section -->
+<section class="mb-5">
+    <h3 class="section-title mb-4 border-start border-4 border-warning ps-3 fw-bold">{{ t('recent_announcements') }}</h3>
+
+    <div class="announcements-container">
+        {% for alert in announcements %}
+        <div class="alert alert-{{ alert.type }} d-flex align-items-center shadow-sm mb-3" role="alert">
+            <i class="bi {{ alert.icon }} me-3 fs-5 flex-shrink-0"></i>
+            <div>
+                {{ alert.message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% endblock %}

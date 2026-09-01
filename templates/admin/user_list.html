@@ -1,0 +1,309 @@
+{% extends "admin/base.html" %}
+
+{% block title %}User Management{% endblock %}
+
+{% block admin_content %}
+<!-- Header & Filter Bar -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-people-fill text-primary me-2"></i>Admin User Management &amp; Account Control
+        </h2>
+        <p class="text-muted mb-0">
+            Manage registered Warkari pilgrim profiles, emergency contacts, administrator accounts, and active/inactive status controls.
+        </p>
+    </div>
+    
+    <!-- Filter Buttons: Role & Status -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Role Filter Group -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Role Filter">
+            <a href="{{ url_for('admin.admin_user_list', role='all', status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_role == 'all' %}btn-dark active{% else %}btn-outline-dark{% endif %}">
+                All Users <span class="badge bg-secondary ms-1">{{ filter_stats.total }}</span>
+            </a>
+            <a href="{{ url_for('admin.admin_user_list', role='regular', status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_role in ['regular', 'pilgrim'] %}btn-primary active{% else %}btn-outline-primary{% endif %}">
+                <i class="bi bi-person-fill me-1"></i>Pilgrims 
+                <span class="badge bg-light text-dark border ms-1">{{ filter_stats.regular }}</span>
+            </a>
+            <a href="{{ url_for('admin.admin_user_list', role='volunteer', status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_role == 'volunteer' %}btn-info text-dark active{% else %}btn-outline-info text-dark{% endif %}">
+                <i class="bi bi-person-badge-fill me-1"></i>Volunteers 
+                <span class="badge bg-light text-dark border ms-1">{{ filter_stats.volunteers }}</span>
+            </a>
+            <a href="{{ url_for('admin.admin_user_list', role='admin', status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_role == 'admin' %}btn-warning text-dark active{% else %}btn-outline-warning text-dark{% endif %}">
+                <i class="bi bi-shield-lock-fill me-1"></i>Admins 
+                <span class="badge bg-dark ms-1">{{ filter_stats.admins }}</span>
+            </a>
+        </div>
+
+
+        <!-- Status Filter Group -->
+        <div class="btn-group btn-group-sm" role="group" aria-label="Status Filter">
+            <a href="{{ url_for('admin.admin_user_list', role=filter_stats.current_role, status='active', q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_status == 'active' %}btn-success active{% else %}btn-outline-success{% endif %}">
+                <i class="bi bi-check-circle-fill me-1"></i>Active 
+                <span class="badge bg-light text-dark border ms-1">{{ filter_stats.active }}</span>
+            </a>
+            <a href="{{ url_for('admin.admin_user_list', role=filter_stats.current_role, status='inactive', q=filter_stats.search_query) }}" 
+               class="btn {% if filter_stats.current_status == 'inactive' %}btn-danger active{% else %}btn-outline-danger{% endif %}">
+                <i class="bi bi-slash-circle-fill me-1"></i>Inactive 
+                <span class="badge bg-light text-dark border ms-1">{{ filter_stats.inactive }}</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search Bar & Summary Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+        <form method="GET" action="{{ url_for('admin.admin_user_list') }}" class="row g-2 align-items-center">
+            <input type="hidden" name="role" value="{{ filter_stats.current_role }}">
+            <input type="hidden" name="status" value="{{ filter_stats.current_status }}">
+            <div class="col-md-8 col-lg-6">
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="q" class="form-control" 
+                           placeholder="Search pilgrims by name or phone number..." 
+                           value="{{ filter_stats.search_query }}">
+                    <button class="btn btn-primary" type="submit">
+                        Search
+                    </button>
+                    {% if filter_stats.search_query or filter_stats.current_role != 'all' or filter_stats.current_status != 'all' %}
+                    <a href="{{ url_for('admin.admin_user_list') }}" 
+                       class="btn btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-arrow-clockwise"></i> Reset
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-4 col-lg-6 text-md-end text-muted small">
+                Showing <strong>{{ users_list|length }}</strong> of <strong>{{ filter_stats.total }}</strong> user accounts
+                {% if filter_stats.search_query %}
+                matching "<em>{{ filter_stats.search_query }}</em>"
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- User Table Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-person-lines-fill me-2 text-primary"></i>
+            User Account Roster
+            <span class="text-muted fs-6 font-monospace">({{ filter_stats.current_role|upper }} / {{ filter_stats.current_status|upper }})</span>
+        </h5>
+        <span class="badge bg-light text-dark border">{{ users_list|length }} Accounts Listed</span>
+    </div>
+    <div class="card-body p-0">
+        {% if users_list %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 70px;">ID</th>
+                        <th>Name &amp; Role</th>
+                        <th>Status</th>
+                        <th>Phone Number</th>
+                        <th>Emergency Contact</th>
+                        <th>Medical Info</th>
+                        <th>Registered Date</th>
+                        <th class="text-end" style="width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users_list %}
+                    <tr class="{% if u.is_active == 0 %}table-light opacity-75{% endif %}">
+                        <td class="fw-bold font-monospace text-muted">#{{ u.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fw-semibold text-dark">{{ u.name }}</span>
+                                {% if u.role == 'ADMIN' %}
+                                <span class="badge bg-warning text-dark border border-warning" title="Administrator Account">
+                                    <i class="bi bi-shield-lock-fill me-1"></i>ADMIN
+                                </span>
+                                {% elif u.role == 'VOLUNTEER' %}
+                                <span class="badge bg-info text-dark border border-info" title="Field Volunteer Account">
+                                    <i class="bi bi-person-badge-fill me-1"></i>VOLUNTEER
+                                </span>
+                                {% else %}
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle" title="Registered Pilgrim Account">
+                                    <i class="bi bi-person me-1"></i>PILGRIM
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if u.is_active == 1 %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace">
+                                <i class="bi bi-check-circle-fill me-1"></i>ACTIVE
+                            </span>
+                            {% else %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace">
+                                <i class="bi bi-slash-circle-fill me-1"></i>INACTIVE
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="font-monospace small">
+                            <i class="bi bi-telephone text-muted me-1"></i>{{ u.phone }}
+                        </td>
+                        <td class="small">
+                            {% if u.emergency_contact != '—' %}
+                            <span class="text-dark"><i class="bi bi-telephone-plus text-danger me-1"></i>{{ u.emergency_contact }}</span>
+                            {% else %}
+                            <span class="text-muted italic">Not provided</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">
+                            {% if u.medical_info != '—' %}
+                            <span class="text-dark"><i class="bi bi-journal-medical text-warning me-1"></i>{{ u.medical_info }}</span>
+                            {% else %}
+                            <span class="text-muted italic">None</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">
+                            <i class="bi bi-calendar me-1"></i>{{ u.created_at }}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex gap-1">
+                                <!-- Details Modal Button -->
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2" 
+                                        data-bs-toggle="modal" data-bs-target="#userModal_{{ u.id }}" title="View Profile Details">
+                                    <i class="bi bi-eye"></i> Details
+                                </button>
+
+                                <!-- Toggle Status Form Action -->
+                                {% if u.is_current_admin %}
+                                <button class="btn btn-sm btn-outline-secondary py-1 px-2" disabled title="Cannot disable your own administrator account">
+                                    <i class="bi bi-shield-check"></i> Self
+                                </button>
+                                {% elif u.is_active == 1 %}
+                                <form method="POST" action="{{ url_for('admin.admin_toggle_user_status', user_id=u.id, role=filter_stats.current_role, status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to disable user account #{{ u.id }} ({{ u.name }})? Disabled users will not be able to log in.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Disable User Account">
+                                        <i class="bi bi-person-slash"></i> Disable
+                                    </button>
+                                </form>
+                                {% else %}
+                                <form method="POST" action="{{ url_for('admin.admin_toggle_user_status', user_id=u.id, role=filter_stats.current_role, status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+                                      class="d-inline"
+                                      onsubmit="return confirm('Are you sure you want to reactivate user account #{{ u.id }} ({{ u.name }})?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Reactivate User Account">
+                                        <i class="bi bi-person-check-fill"></i> Reactivate
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    <!-- User Details Modal for Record #{{ u.id }} -->
+                    <div class="modal fade" id="userModal_{{ u.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header {% if u.role == 'ADMIN' %}bg-dark text-white{% elif u.role == 'VOLUNTEER' %}bg-info text-dark{% else %}bg-primary text-white{% endif %}">
+                                    <h5 class="modal-title fw-bold">
+                                        <i class="bi bi-person-badge me-2"></i>{% if u.role == 'ADMIN' %}Administrator{% elif u.role == 'VOLUNTEER' %}Volunteer{% else %}Pilgrim{% endif %} Profile Details #{{ u.id }}
+                                    </h5>
+                                    <button type="button" class="btn-close {% if u.role != 'VOLUNTEER' %}btn-close-white{% endif %}" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <!-- Role Pill & Status Header -->
+                                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                                        <div>
+                                            <span class="text-muted small">Account Role:</span>
+                                            {% if u.role == 'ADMIN' %}
+                                            <span class="badge bg-warning text-dark ms-1"><i class="bi bi-shield-lock-fill me-1"></i>ADMIN</span>
+                                            {% elif u.role == 'VOLUNTEER' %}
+                                            <span class="badge bg-info text-dark ms-1"><i class="bi bi-person-badge-fill me-1"></i>VOLUNTEER</span>
+                                            {% if u.volunteer_approval %}
+                                            <span class="badge bg-success ms-1"><i class="bi bi-check-circle me-1"></i>{{ u.volunteer_approval }}</span>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="badge bg-primary ms-1"><i class="bi bi-person-fill me-1"></i>PILGRIM</span>
+                                            {% if u.volunteer_approval == 'PENDING APPROVAL' %}
+                                            <span class="badge bg-warning text-dark ms-1"><i class="bi bi-clock-history me-1"></i>VOLUNTEER PENDING</span>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if u.is_active == 1 %}
+                                            <span class="badge bg-success font-monospace"><i class="bi bi-check-circle me-1"></i>ACTIVE</span>
+                                            {% else %}
+                                            <span class="badge bg-danger font-monospace"><i class="bi bi-slash-circle me-1"></i>INACTIVE</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+
+                                    <!-- Account Info -->
+                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-2">
+                                        <i class="bi bi-person-circle text-primary me-1"></i>User Identity
+                                    </h6>
+                                    <div class="row g-2 small mb-3">
+                                        <div class="col-6"><strong>User ID:</strong> #{{ u.id }}</div>
+                                        <div class="col-6"><strong>Full Name:</strong> {{ u.name }}</div>
+                                        <div class="col-12"><strong>Phone (Login ID):</strong> <code class="text-dark">{{ u.phone }}</code></div>
+                                    </div>
+
+                                    <!-- Emergency & Medical Notes -->
+                                    <h6 class="fw-bold text-dark border-bottom pb-2 mb-2">
+                                        <i class="bi bi-heart-pulse-fill text-danger me-1"></i>Emergency &amp; Medical Information
+                                    </h6>
+                                    <div class="small mb-3">
+                                        <div class="mb-1"><strong>Emergency Contact:</strong> {{ u.emergency_contact }}</div>
+                                        <div><strong>Medical Conditions / Allergies:</strong> {{ u.medical_info }}</div>
+                                    </div>
+
+                                    <div class="text-muted small border-top pt-2">
+                                        <i class="bi bi-clock me-1"></i>Registered at: {{ u.created_at }}
+                                    </div>
+                                </div>
+                                <div class="modal-footer d-flex justify-content-between">
+                                    <div>
+                                        {% if u.is_current_admin %}
+                                        <span class="text-muted small italic">Protected Current Admin</span>
+                                        {% elif u.is_active == 1 %}
+                                        <form method="POST" action="{{ url_for('admin.admin_toggle_user_status', user_id=u.id, role=filter_stats.current_role, status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+                                              onsubmit="return confirm('Are you sure you want to disable user account #{{ u.id }}?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-person-slash me-1"></i> Disable Account
+                                            </button>
+                                        </form>
+                                        {% else %}
+                                        <form method="POST" action="{{ url_for('admin.admin_toggle_user_status', user_id=u.id, role=filter_stats.current_role, status=filter_stats.current_status, q=filter_stats.search_query) }}" 
+                                              onsubmit="return confirm('Are you sure you want to reactivate user account #{{ u.id }}?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-success">
+                                                <i class="bi bi-person-check-fill me-1"></i> Reactivate Account
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-person-x display-4 text-secondary d-block mb-3"></i>
+            <h5>No user accounts found matching query: <strong>"{{ filter_stats.search_query or filter_stats.current_role|upper }}"</strong></h5>
+            <a href="{{ url_for('admin.admin_user_list') }}" class="btn btn-sm btn-outline-primary mt-2">
+                Reset Search &amp; Filter
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

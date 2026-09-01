@@ -1,0 +1,398 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Volunteer Tracking &amp; Safety Control{% endblock %}
+
+{% block extra_head %}
+<style>
+    #adminVolunteerMap {
+        height: 380px;
+        width: 100%;
+        border-radius: 0.75rem;
+        z-index: 1;
+    }
+    .vol-legend-dot {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Header Section -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-person-badge-fill text-primary me-2"></i>Volunteer Tracking &amp; Safety Control
+        </h2>
+        <p class="text-muted mb-0">
+            Monitor registered ground volunteers, live location updates, coordinate freshness, and deployment status.
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <a href="{{ url_for('admin.admin_map') }}" class="btn btn-outline-primary fw-semibold">
+            <i class="bi bi-map-fill me-1"></i> Full Ground Situation Map
+        </a>
+    </div>
+</div>
+
+<!-- Summary Metric Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Total Volunteers</div>
+                    <div id="statTotal" class="h3 fw-bold text-dark mb-0">{{ stats.total }}</div>
+                </div>
+                <div class="bg-primary-subtle text-primary p-3 rounded-circle">
+                    <i class="bi bi-people-fill fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Location Sharing</div>
+                    <div id="statTracking" class="h3 fw-bold text-success mb-0">{{ stats.tracking }}</div>
+                </div>
+                <div class="bg-success-subtle text-success p-3 rounded-circle">
+                    <i class="bi bi-broadcast fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Recent / Live</div>
+                    <div id="statRecent" class="h3 fw-bold text-info mb-0">{{ stats.active }}</div>
+                </div>
+                <div class="bg-info-subtle text-info p-3 rounded-circle">
+                    <i class="bi bi-clock-history fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">Stale (&gt;5m)</div>
+                    <div id="statStale" class="h3 fw-bold text-warning mb-0">{{ stats.stale }}</div>
+                </div>
+                <div class="bg-warning-subtle text-warning p-3 rounded-circle">
+                    <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl">
+        <div class="card border-0 shadow-sm rounded-3">
+            <div class="card-body p-3 d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold text-uppercase">No Location / Offline</div>
+                    <div id="statOffline" class="h3 fw-bold text-secondary mb-0">{{ stats.offline }}</div>
+                </div>
+                <div class="bg-secondary-subtle text-secondary p-3 rounded-circle">
+                    <i class="bi bi-geo-alt-slash-fill fs-4"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Interactive Live Volunteer Map Card -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-geo-alt-fill text-danger me-1"></i>Live Multi-Volunteer Tracking Map
+            </h5>
+            <span id="mapLiveIndicator" class="badge bg-success font-monospace small">
+                <i class="bi bi-broadcast me-1"></i>AUTO-SYNC ACTIVE (15s)
+            </span>
+        </div>
+        <div class="d-flex align-items-center gap-3 small text-muted font-monospace">
+            <span><span class="vol-legend-dot bg-success"></span>LIVE (&le;60s)</span>
+            <span><span class="vol-legend-dot bg-primary"></span>RECENT (&le;5m)</span>
+            <span><span class="vol-legend-dot bg-warning"></span>STALE (&gt;5m)</span>
+        </div>
+    </div>
+    <div class="card-body p-3">
+        <div id="adminVolunteerMap"></div>
+        <div id="adminMapFeedback" class="alert alert-warning py-1 px-3 mt-2 mb-0 small d-none rounded-3" role="alert">
+            <i class="bi bi-wifi-off me-1"></i> <span id="adminMapFeedbackText">Connection unavailable — showing last known locations.</span>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Controls -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.admin_volunteer_list') }}" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="q" value="{{ search_query }}" placeholder="Search by volunteer name or phone...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="status">
+                    <option value="ALL" {% if status_filter == 'ALL' %}selected{% endif %}>All Statuses</option>
+                    <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active</option>
+                    <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" name="freshness">
+                    <option value="ALL" {% if freshness_filter == 'ALL' %}selected{% endif %}>All Freshness</option>
+                    <option value="LIVE" {% if freshness_filter == 'LIVE' %}selected{% endif %}>Live (&le;60s)</option>
+                    <option value="RECENT" {% if freshness_filter == 'RECENT' %}selected{% endif %}>Recent (&le;5m)</option>
+                    <option value="STALE" {% if freshness_filter == 'STALE' %}selected{% endif %}>Stale (&gt;5m)</option>
+                    <option value="OFFLINE" {% if freshness_filter == 'OFFLINE' %}selected{% endif %}>Offline</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel-fill"></i></button>
+                {% if search_query or status_filter != 'ALL' or freshness_filter != 'ALL' %}
+                <a href="{{ url_for('admin.admin_volunteer_list') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Volunteers Table Card -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-table me-2 text-primary"></i>Volunteer Directory List
+        </h5>
+        <span class="badge bg-secondary font-monospace">Showing {{ stats.filtered_count }} of {{ stats.total }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width: 70px;">ID</th>
+                        <th>Volunteer Name</th>
+                        <th>Phone</th>
+                        <th>Account Status</th>
+                        <th>Location Freshness</th>
+                        <th>Current Coordinates</th>
+                        <th>Last Update</th>
+                        <th class="text-end pe-3" style="width: 140px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if volunteers %}
+                        {% for v in volunteers %}
+                        <tr>
+                            <td class="ps-3 font-monospace text-muted">#{{ v.id }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ v.name }}</div>
+                            </td>
+                            <td class="font-monospace">{{ v.phone }}</td>
+                            <td>
+                                {% if v.status == 'ACTIVE' %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    <i class="bi bi-check-circle-fill me-1"></i>ACTIVE
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                    <i class="bi bi-x-circle-fill me-1"></i>INACTIVE
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if v.freshness == 'LIVE' %}
+                                <span class="badge bg-success px-2 py-1">
+                                    <i class="bi bi-broadcast me-1"></i>LIVE (&le;60s)
+                                </span>
+                                {% elif v.freshness == 'RECENT' %}
+                                <span class="badge bg-primary px-2 py-1">
+                                    <i class="bi bi-clock-history me-1"></i>RECENT (&le;5m)
+                                </span>
+                                {% elif v.freshness == 'STALE' %}
+                                <span class="badge bg-warning text-dark px-2 py-1">
+                                    <i class="bi bi-exclamation-circle me-1"></i>STALE (&gt;5m)
+                                </span>
+                                {% else %}
+                                <span class="badge bg-secondary px-2 py-1">
+                                    <i class="bi bi-geo-alt-slash me-1"></i>OFFLINE
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if v.latitude is not none and v.longitude is not none %}
+                                <span class="font-monospace small text-dark">
+                                    {{ "%.4f"|format(v.latitude) }}, {{ "%.4f"|format(v.longitude) }}
+                                </span>
+                                <a href="{{ url_for('admin.admin_map') }}" class="ms-1 text-primary text-decoration-none" title="View on Full Ground Map">
+                                    <i class="bi bi-box-arrow-up-right"></i>
+                                </a>
+                                {% else %}
+                                <span class="text-muted small fst-italic">No coordinates recorded</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <small class="text-muted">
+                                    {% if v.location_updated_at %}
+                                    <i class="bi bi-clock me-1"></i>{{ v.location_updated_at }}
+                                    {% else %}
+                                    Never
+                                    {% endif %}
+                                </small>
+                            </td>
+                            <td class="text-end pe-3 text-nowrap">
+                                <a href="tel:{{ v.phone }}" class="btn btn-sm btn-outline-success py-1 px-2 me-1" title="Call {{ v.phone }}">
+                                    <i class="bi bi-telephone-fill"></i>
+                                </a>
+                                <a href="https://wa.me/91{{ v.phone }}?text=Hello%20{{ v.name }}%2C%20this%20is%20Wari%20Mitra%20Control%20Center." target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-success py-1 px-2 me-1" title="WhatsApp">
+                                    <i class="bi bi-whatsapp"></i>
+                                </a>
+                                <a href="{{ url_for('admin.admin_volunteer_detail', volunteer_id=v.id) }}" class="btn btn-sm btn-outline-primary py-1 px-2 me-1" title="View Detailed Profile">
+                                    <i class="bi bi-person-lines-fill"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.admin_toggle_volunteer_status', volunteer_id=v.id) }}" class="d-inline">
+                                    {% if v.status == 'ACTIVE' %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2" title="Deactivate Volunteer" onclick="return confirm('Deactivate volunteer {{ v.name }}?');">
+                                        <i class="bi bi-person-x-fill"></i>
+                                    </button>
+                                    {% else %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success py-1 px-2" title="Activate Volunteer">
+                                        <i class="bi bi-person-check-fill"></i>
+                                    </button>
+                                    {% endif %}
+                                </form>
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-person-badge display-6 d-block mb-2 text-secondary opacity-50"></i>
+                                <strong>No volunteers found matching your criteria.</strong>
+                                <div class="small mt-1">Try adjusting your search query or status filter.</div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Leaflet Map
+    const map = L.map('adminVolunteerMap').setView([18.25, 74.35], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+
+    const volunteerMarkers = {};
+    const feedbackAlert = document.getElementById('adminMapFeedback');
+    const feedbackText = document.getElementById('adminMapFeedbackText');
+
+    function getVolunteerIcon(freshness) {
+        let color = '#64748b'; // default offline
+        if (freshness === 'LIVE') color = '#198754';
+        else if (freshness === 'RECENT') color = '#0d6efd';
+        else if (freshness === 'STALE') color = '#ffc107';
+
+        return L.divIcon({
+            className: 'admin-vol-marker',
+            html: `<div style="background-color: ${color}; color: white; border: 2px solid white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.35); font-weight: bold;"><i class="bi bi-person-fill" style="font-size: 1.1rem;"></i></div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16]
+        });
+    }
+
+    function syncVolunteers() {
+        fetch("{{ url_for('admin.api_admin_volunteer_locations') }}")
+            .then(res => {
+                if (!res.ok) throw new Error('API status ' + res.status);
+                return res.json();
+            })
+            .then(data => {
+                feedbackAlert.classList.add('d-none');
+                if (!data.success || !data.volunteers) return;
+
+                const bounds = [];
+                data.volunteers.forEach(v => {
+                    if (v.latitude !== null && v.longitude !== null) {
+                        const latLng = [v.latitude, v.longitude];
+                        bounds.push(latLng);
+
+                        const isStale = v.freshness === 'STALE' || v.freshness === 'OFFLINE';
+                        const locLabel = isStale ? 'Last known location' : 'Live location';
+
+                        const popupHtml = `
+                            <div style="min-width: 190px; font-family: system-ui;">
+                                <div style="font-weight: 700; color: #0f172a; font-size: 0.95rem; margin-bottom: 2px;">
+                                    <i class="bi bi-person-badge-fill text-primary me-1"></i>${v.name}
+                                </div>
+                                <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 4px;">
+                                    Phone: <strong>${v.phone}</strong>
+                                </div>
+                                <div style="font-size: 0.8rem; margin-bottom: 4px;">
+                                    Status: <span class="badge ${v.is_sharing ? 'bg-success' : 'bg-secondary'}">${v.is_sharing ? 'LOCATION SHARING ON' : 'LOCATION SHARING OFF'}</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: #475569;">
+                                    ${locLabel}: <strong>${v.latitude.toFixed(4)}, ${v.longitude.toFixed(4)}</strong>
+                                </div>
+                                ${v.accuracy ? `<div style="font-size: 0.75rem; color: #64748b;">Accuracy: ±${Math.round(v.accuracy)}m</div>` : ''}
+                                <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">
+                                    Last Updated: ${v.last_update}
+                                </div>
+                            </div>
+                        `;
+
+                        if (volunteerMarkers[v.id]) {
+                            // Update existing marker dynamically
+                            volunteerMarkers[v.id].setLatLng(latLng);
+                            volunteerMarkers[v.id].setIcon(getVolunteerIcon(v.freshness));
+                            volunteerMarkers[v.id].setPopupContent(popupHtml);
+                        } else {
+                            // Create new marker
+                            const marker = L.marker(latLng, { icon: getVolunteerIcon(v.freshness) })
+                                .bindPopup(popupHtml)
+                                .addTo(map);
+                            volunteerMarkers[v.id] = marker;
+                        }
+                    }
+                });
+
+                // Auto-fit bounds on first load if markers exist
+                if (bounds.length > 0 && !window._boundsFitted) {
+                    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+                    window._boundsFitted = true;
+                }
+            })
+            .catch(err => {
+                feedbackAlert.classList.remove('d-none');
+                feedbackText.textContent = 'Connection unavailable — showing last known locations.';
+            });
+    }
+
+    // Initial sync
+    syncVolunteers();
+
+    // Auto-refresh polling every 15 seconds
+    setInterval(syncVolunteers, 15000);
+});
+</script>
+{% endblock %}

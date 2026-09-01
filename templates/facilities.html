@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('facilities_title') }}{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1><i class="bi bi-building me-2"></i>{{ t('facilities_title') }}</h1>
+    <p>{{ t('facilities_desc') }}</p>
+</div>
+
+<!-- Controls Row -->
+<div class="row g-3 mb-4">
+    <!-- Search -->
+    <div class="col-md-5">
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" id="facilitySearch"
+                   placeholder="{{ t('search_facilities') }}">
+        </div>
+    </div>
+    <!-- Near Me Button -->
+    <div class="col-md-3">
+        <button class="btn btn-wari w-100" id="nearMeBtn">
+            <i class="bi bi-crosshair me-1"></i> {{ t('near_me') }}
+        </button>
+    </div>
+    <!-- Result Count -->
+    <div class="col-md-4 d-flex align-items-center justify-content-md-end">
+        <span class="text-muted" id="facilityCount">Loading...</span>
+    </div>
+</div>
+
+<!-- Category Filter Buttons -->
+<div class="facility-filters mb-4" id="categoryFilters">
+    <button class="btn filter-btn active" data-type="all">
+        <i class="bi bi-grid-fill me-1"></i> {{ t('all_categories') }}
+    </button>
+    <button class="btn filter-btn" data-type="medical">
+        <i class="bi bi-hospital me-1"></i> {{ t('category_medical') }}
+    </button>
+    <button class="btn filter-btn" data-type="water">
+        <i class="bi bi-droplet-fill me-1"></i> {{ t('category_water') }}
+    </button>
+    <button class="btn filter-btn" data-type="toilet">
+        <i class="bi bi-door-closed me-1"></i> {{ t('category_toilet') }}
+    </button>
+    <button class="btn filter-btn" data-type="food">
+        <i class="bi bi-egg-fried me-1"></i> {{ t('category_food') }}
+    </button>
+    <button class="btn filter-btn" data-type="shelter">
+        <i class="bi bi-house-door me-1"></i> {{ t('category_accommodation') }}
+    </button>
+    <button class="btn filter-btn" data-type="emergency">
+        <i class="bi bi-plus-circle-fill me-1"></i> {{ t('category_emergency') }}
+    </button>
+</div>
+
+<!-- Location Status (shown when Near Me is used) -->
+<div class="alert alert-info d-none mb-3" id="locationStatus" role="alert">
+    <i class="bi bi-crosshair me-2"></i>
+    <span id="locationStatusText">Getting your location...</span>
+</div>
+
+<!-- Mini Map -->
+<div class="card card-wari mb-4">
+    <div class="card-body p-0">
+        <div id="facilityMap" style="height:300px;border-radius:var(--radius-lg);"></div>
+    </div>
+</div>
+
+<!-- Facility Cards Grid -->
+<div class="row g-3" id="facilityGrid">
+    <!-- Cards populated by JS -->
+    <div class="col-12 text-center py-4">
+        <div class="spinner-border spinner-wari" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted mt-2">Loading facilities...</p>
+    </div>
+</div>
+
+<!-- Empty State -->
+<div class="text-center py-5 d-none" id="emptyState">
+    <i class="bi bi-search display-4 text-muted"></i>
+    <h5 class="mt-3 text-muted">{{ t('no_facilities_found') }}</h5>
+    <button class="btn btn-outline-secondary btn-sm" onclick="resetFilters()">
+        <i class="bi bi-arrow-counterclockwise me-1"></i> {{ t('retry') }}
+    </button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/facilities.js"></script>
+{% endblock %}

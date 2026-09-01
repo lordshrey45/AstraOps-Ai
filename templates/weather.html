@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('weather_title') }}{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <h1><i class="bi bi-cloud-sun-fill me-2"></i>{{ t('weather_title') }}</h1>
+    <p>{{ t('weather_desc') }}</p>
+</div>
+
+<!-- Location Selector Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <label for="locationSelect" class="form-label fw-semibold">
+            <i class="bi bi-geo-alt me-1"></i> {{ t('select_route_location') }}
+        </label>
+        <select class="form-select" id="locationSelect">
+            <option value="" selected disabled>{{ t('choose_location') }}</option>
+            {% for loc in locations %}
+            <option value="{{ loc.latitude }},{{ loc.longitude }}"
+                    data-name="{{ loc.name }}" data-day="{{ loc.day }}">
+                {{ loc.name }} ({{ t('day') }} {{ loc.day }})
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button class="btn btn-wari w-100" id="myLocationBtn">
+            <i class="bi bi-crosshair me-1"></i> {{ t('my_location') }}
+        </button>
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <div id="locationLabel" class="text-muted small w-100 text-md-end"></div>
+    </div>
+</div>
+
+<!-- Alerts -->
+<div id="weatherAlerts" class="mb-3"></div>
+
+<!-- Loading State -->
+<div class="text-center py-5 d-none" id="weatherLoading">
+    <div class="spinner-border spinner-wari" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-2">Loading...</p>
+</div>
+
+<!-- Error State -->
+<div class="text-center py-5 d-none" id="weatherError">
+    <i class="bi bi-cloud-slash display-4 text-muted"></i>
+    <h5 class="mt-3 text-muted">{{ t('weather_unavailable') }}</h5>
+    <p class="text-muted" id="weatherErrorText">{{ t('weather_unavailable') }}</p>
+    <button class="btn btn-outline-secondary btn-sm" onclick="retryWeather()">
+        <i class="bi bi-arrow-clockwise me-1"></i> {{ t('retry') }}
+    </button>
+</div>
+
+<!-- Welcome State -->
+<div class="text-center py-5" id="weatherWelcome">
+    <i class="bi bi-cloud-sun display-4 text-warning"></i>
+    <h5 class="mt-3">{{ t('select_route_location') }}</h5>
+    <p class="text-muted">{{ t('weather_welcome') }}</p>
+</div>
+
+<!-- Current Weather Card -->
+<div class="d-none" id="weatherContent">
+    <div class="row g-4 mb-4">
+        <div class="col-lg-5">
+            <div class="card card-wari h-100 weather-current-card">
+                <div class="card-body p-4 text-center">
+                    <h6 class="text-muted mb-1" id="currentLocationName">--</h6>
+                    <div class="weather-main-icon my-3">
+                        <i class="bi bi-sun-fill" id="currentIcon"></i>
+                    </div>
+                    <div class="display-3 fw-bold text-wari-saffron" id="currentTemp">--</div>
+                    <p class="fs-5 mb-1" id="currentCondition">--</p>
+                    <small class="text-muted" id="currentTime">--</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card card-wari h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-1"></i> {{ t('weather_details') }}</h6>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="weather-detail-item">
+                                <i class="bi bi-thermometer-half"></i>
+                                <div>
+                                    <small class="text-muted d-block">{{ t('feels_like') }}</small>
+                                    <strong id="currentFeelsLike">--</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="weather-detail-item">
+                                <i class="bi bi-droplet-fill"></i>
+                                <div>
+                                    <small class="text-muted d-block">{{ t('humidity') }}</small>
+                                    <strong id="currentHumidity">--</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="weather-detail-item">
+                                <i class="bi bi-wind"></i>
+                                <div>
+                                    <small class="text-muted d-block">{{ t('wind') }}</small>
+                                    <strong id="currentWind">--</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="weather-detail-item">
+                                <i class="bi bi-umbrella-fill"></i>
+                                <div>
+                                    <small class="text-muted d-block">{{ t('precipitation') }}</small>
+                                    <strong id="currentPrecip">--</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-Day Forecast -->
+    <h5 class="section-title mb-3"><i class="bi bi-calendar-week"></i> {{ t('forecast_7day') }}</h5>
+    <div class="row g-3 mb-4" id="forecastCards">
+        <!-- Populated by JS -->
+    </div>
+
+    <!-- Attribution -->
+    <div class="text-center mt-3 mb-2">
+        <small class="text-muted">
+            <i class="bi bi-cloud me-1"></i>
+            {{ t('weather_data_by') }} <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a>
+        </small>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/weather.js"></script>
+{% endblock %}

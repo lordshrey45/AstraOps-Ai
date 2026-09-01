@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer Registration Request{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+
+        <!-- Volunteer Registration Card -->
+        <div class="card card-wari mt-4 shadow-sm border-0">
+            <div class="card-header bg-primary text-white text-center py-3">
+                <h4 class="mb-0 fw-bold">
+                    <i class="bi bi-person-badge-fill me-2"></i>Volunteer Registration Request
+                </h4>
+                <div class="small opacity-75 mt-1">Join the AstraOps AI Field Operations &amp; Pilgrim Safety Network</div>
+            </div>
+            <div class="card-body p-4">
+                
+                <!-- Notice Banner -->
+                <div class="alert alert-info py-2 px-3 mb-4 small rounded-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check fs-4 text-primary"></i>
+                    <div>
+                        <strong>Approval Workflow:</strong> Volunteer accounts are reviewed and activated by administrators to ensure coordinated emergency response during the Wari.
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register_volunteer') }}" id="volunteerRegisterForm" novalidate>
+
+                    <!-- Full Name (Required) -->
+                    <div class="mb-3">
+                        <label for="name" class="form-label fw-semibold">
+                            <i class="bi bi-person text-primary"></i> Full Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="name" name="name"
+                               placeholder="e.g. Rahul Patil"
+                               value="{{ name if name else '' }}" required>
+                    </div>
+
+                    <!-- Phone Number (Required) -->
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold">
+                            <i class="bi bi-telephone text-primary"></i> Phone Number (Login ID) <span class="text-danger">*</span>
+                        </label>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                               placeholder="e.g. 9876543210"
+                               value="{{ phone if phone else '' }}" required>
+                    </div>
+
+                    <!-- Password (Required) -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label fw-semibold">
+                                <i class="bi bi-lock text-primary"></i> Password <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="password" name="password"
+                                   placeholder="Min 6 characters" minlength="6" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label fw-semibold">
+                                <i class="bi bi-lock-fill text-primary"></i> Confirm Password <span class="text-danger">*</span>
+                            </label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password"
+                                   placeholder="Re-enter password" required>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <!-- Preferred Location / Operating Route Area -->
+                    <div class="mb-3">
+                        <label for="location_area" class="form-label fw-semibold">
+                            <i class="bi bi-geo-alt-fill text-danger"></i> Preferred Location / Operating Sector
+                        </label>
+                        <input type="text" class="form-control" id="location_area" name="location_area"
+                               placeholder="e.g. Pune, Saswad, Dive Ghat, Pandharpur"
+                               value="{{ location_area if location_area else '' }}">
+                    </div>
+
+                    <!-- Emergency Contact -->
+                    <div class="mb-3">
+                        <label for="emergency_contact" class="form-label fw-semibold">
+                            <i class="bi bi-telephone-outbound text-primary"></i> Emergency Contact (Family / Team Leader)
+                        </label>
+                        <input type="text" class="form-control" id="emergency_contact" name="emergency_contact"
+                               placeholder="e.g. 9822001122 (Brother)"
+                               value="{{ emergency_contact if emergency_contact else '' }}">
+                    </div>
+
+                    <!-- Volunteer Skills & Experience -->
+                    <div class="mb-3">
+                        <label for="experience_notes" class="form-label fw-semibold">
+                            <i class="bi bi-card-checklist text-primary"></i> Skills / Relevant Experience (Optional)
+                        </label>
+                        <textarea class="form-control" id="experience_notes" name="experience_notes"
+                                  rows="2" placeholder="e.g. First Aid certified, Crowd management experience, Fluent in Marathi &amp; Hindi">{{ experience_notes if experience_notes else '' }}</textarea>
+                    </div>
+
+                    <!-- Medical Info (Optional) -->
+                    <div class="mb-3">
+                        <label for="medical_info" class="form-label fw-semibold">
+                            <i class="bi bi-heart-pulse text-danger"></i> Medical Notes / Blood Group (Optional)
+                        </label>
+                        <input type="text" class="form-control" id="medical_info" name="medical_info"
+                               placeholder="e.g. O+ve, No allergies"
+                               value="{{ medical_info if medical_info else '' }}">
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm fw-bold" id="registerVolunteerBtn">
+                            <i class="bi bi-send-check-fill me-1"></i> Submit Volunteer Application
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Navigation Links -->
+                <div class="text-center mt-3 pt-3 border-top">
+                    <p class="mb-1 text-muted small">
+                        Already have an approved account? 
+                        <a href="{{ url_for('auth.login_volunteer') }}" class="fw-bold text-primary">Volunteer Login</a>
+                    </p>
+                    <p class="mb-0 text-muted small">
+                        Registering as a regular pilgrim? 
+                        <a href="{{ url_for('auth.register') }}" class="fw-bold text-secondary">Pilgrim Registration</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

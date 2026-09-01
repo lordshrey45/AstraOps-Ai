@@ -1,0 +1,541 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Ground Situation Map{% endblock %}
+
+{% block admin_head %}
+<!-- Leaflet CSS for Admin Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    .admin-map-container {
+        position: relative;
+        height: 680px;
+        width: 100%;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    #adminMap {
+        height: 100%;
+        width: 100%;
+        z-index: 1;
+    }
+    /* Map Legend Overlay */
+    .admin-map-legend {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(8px);
+        padding: 12px 16px;
+        border-radius: 10px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        font-size: 0.82rem;
+        max-width: 280px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+    .legend-icon {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    /* Pulse Animation for Pending SOS */
+    @keyframes pulse-red {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+    .sos-pending-marker {
+        background-color: #dc3545;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 14px;
+        animation: pulse-red 2s infinite;
+    }
+    .sos-resolved-marker {
+        background-color: #198754;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 14px;
+    }
+    /* Volunteer Marker Styles */
+    @keyframes pulse-blue {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); }
+    }
+    .vol-live-marker {
+        background-color: #0d6efd;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        animation: pulse-blue 2s infinite;
+    }
+    .vol-recent-marker {
+        background-color: #0d6efd;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .vol-stale-marker {
+        background-color: #fd7e14;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .vol-offline-marker {
+        background-color: #6c757d;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        color: white;
+        text-align: center;
+        line-height: 24px;
+        font-size: 13px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Header & Operational Stats Bar -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-map-fill text-warning me-2"></i>Ground Situation &amp; Spatial Operations Map
+        </h2>
+        <p class="text-muted mb-0">
+            Real-time GIS map displaying active emergency SOS alerts, volunteer positions, and route medical/support facilities.
+        </p>
+    </div>
+    
+    <!-- Operational Summary Stats Pills -->
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="badge bg-warning text-dark px-3 py-2 fs-6 border border-warning">
+            <i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>
+            Pending SOS: <strong>{{ map_stats.pending_count }}</strong>
+        </div>
+        <div class="badge bg-success px-3 py-2 fs-6">
+            <i class="bi bi-check-circle-fill me-1"></i>
+            Resolved SOS: <strong>{{ map_stats.resolved_count }}</strong>
+        </div>
+        <div class="badge bg-primary px-3 py-2 fs-6" id="statVolunteersBadge">
+            <i class="bi bi-person-badge-fill me-1"></i>
+            Volunteers: <strong id="statVolTotal">{{ map_stats.volunteers_total }}</strong>
+            <span class="badge bg-light text-primary ms-1" id="statVolLive" style="font-size: 0.7rem;">{{ map_stats.volunteers_tracking }} live</span>
+        </div>
+        <div class="badge bg-secondary px-3 py-2 fs-6">
+            <i class="bi bi-hospital-fill me-1"></i>
+            Route Facilities: <strong>{{ map_stats.facility_count }}</strong>
+        </div>
+    </div>
+</div>
+
+<!-- Map Card Container -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-pin-map-fill me-2 text-danger"></i>
+                Live Spatial Ground View
+            </h5>
+            <span class="badge bg-success-subtle text-success font-monospace" style="font-size: 0.72rem;">
+                <i class="bi bi-broadcast me-1"></i>Auto-Refresh Active (20s)
+            </span>
+        </div>
+        <div class="d-flex gap-2">
+            <button id="btnRefreshVols" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-repeat me-1"></i>Refresh Volunteers
+            </button>
+            <a href="{{ url_for('admin.admin_volunteer_list') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-person-badge-fill me-1"></i>Volunteer Directory
+            </a>
+            <button id="btnFitBounds" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrows-fullscreen me-1"></i>Fit Bounds
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0 position-relative">
+        <div class="admin-map-container">
+            <div id="adminMap"></div>
+            
+            <!-- Map Legend -->
+            <div class="admin-map-legend">
+                <div class="fw-bold text-dark mb-2 pb-1 border-bottom">
+                    <i class="bi bi-info-circle-fill text-primary me-1"></i>Map Marker Legend
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-danger"></span>
+                    <strong>Pending Emergency SOS</strong>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-success"></span>
+                    <span>Resolved Emergency SOS</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-primary"></span>
+                    <strong>Live Field Volunteer (Active)</strong>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #fd7e14;"></span>
+                    <span>Stale Volunteer (>5m Old)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon" style="background-color: #6c757d;"></span>
+                    <span>Offline / Sharing Off</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-danger"></span>
+                    <span>Medical Camp / Hospital</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-info"></span>
+                    <span>Emergency Post / Police</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-icon bg-warning"></span>
+                    <span>Food / Water / Shelter</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<!-- Leaflet JS for Admin Map -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Embedded JSON Data payloads from Backend
+    const sosMarkersData = {{ sos_markers | tojson }};
+    const facilityMarkersData = {{ facility_markers | tojson }};
+    const volunteerMarkersData = {{ volunteer_markers | tojson }};
+
+    // Default map center (Pandharpur / Wari route corridor)
+    const map = L.map('adminMap').setView([18.2, 74.5], 8);
+
+    // OpenStreetMap Tile Layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const boundsGroup = [];
+
+    // Dedicated Layer Groups for dynamic refreshing
+    const volunteerLayer = L.layerGroup().addTo(map);
+
+    // Micro-jitter coordinate offset for multiple overlapping markers
+    const coordCounts = {};
+    function getDistributedCoords(lat, lon) {
+        const key = `${lat.toFixed(5)},${lon.toFixed(5)}`;
+        const count = coordCounts[key] || 0;
+        coordCounts[key] = count + 1;
+        if (count === 0) return [lat, lon];
+        const angle = (count * 60) * (Math.PI / 180);
+        const radius = 0.0003 * Math.ceil(count / 6);
+        return [lat + radius * Math.cos(angle), lon + radius * Math.sin(angle)];
+    }
+
+    // 2. Render SOS Markers (Phase 35 Multi-Incident Support)
+    sosMarkersData.forEach(function(sos) {
+        if (!sos.latitude || !sos.longitude) return;
+
+        const isResolved = (sos.status === 'resolved');
+        const isAssigned = (sos.status === 'assigned');
+        const prio = sos.priority || 'NORMAL';
+        const markerClass = isResolved ? 'sos-resolved-marker' : (isAssigned ? 'sos-pending-marker' : 'sos-pending-marker');
+        const iconHtml = isResolved ? '<i class="bi bi-check-lg"></i>' : (isAssigned ? '<i class="bi bi-person-check-fill"></i>' : (prio === 'CRITICAL' ? '<i class="bi bi-exclamation-octagon-fill"></i>' : '<i class="bi bi-exclamation-triangle-fill"></i>'));
+
+        const customIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div class="${markerClass}" style="width:28px;height:28px;line-height:26px;">${iconHtml}</div>`,
+            iconSize: [28, 28],
+            iconAnchor: [14, 14]
+        });
+
+        const prioBadge = prio === 'CRITICAL' ? '<span class="badge bg-danger ms-1">CRITICAL</span>' :
+                          (prio === 'HIGH' ? '<span class="badge bg-warning text-dark ms-1">HIGH</span>' :
+                          '<span class="badge bg-secondary ms-1">NORMAL</span>');
+
+        const statusBadge = isResolved ? '<span class="badge bg-success">RESOLVED</span>' :
+                            (isAssigned ? '<span class="badge bg-info text-dark">ASSIGNED</span>' : '<span class="badge bg-danger">PENDING</span>');
+
+        const repeatedBadge = sos.is_repeated ? '<div class="mt-1"><span class="badge bg-warning text-dark border border-warning" style="font-size:0.7rem;"><i class="bi bi-repeat me-1"></i>Repeated Alert</span></div>' : '';
+
+        const clusterBadge = sos.in_cluster ? `<div class="mt-1"><span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size:0.7rem;"><i class="bi bi-diagram-3-fill me-1"></i>Cluster: ${sos.cluster_count} active nearby</span></div>` : '';
+
+        const assignedInfo = sos.assigned_volunteer_name ? `<div class="text-primary mt-1"><strong>Assigned:</strong> ${sos.assigned_volunteer_name}</div>` : '';
+
+        const popupContent = `
+            <div style="min-width: 230px; font-family: system-ui, sans-serif;">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <strong style="font-size: 0.95rem;">Emergency SOS #${sos.id}</strong>
+                    <div>
+                        ${statusBadge}
+                        ${prioBadge}
+                    </div>
+                </div>
+                ${repeatedBadge}
+                ${clusterBadge}
+                <div style="font-size: 0.85rem; color: #444; margin-bottom: 6px; margin-top: 4px;">
+                    <div><strong>Caller:</strong> ${sos.user_name} (${sos.user_phone})</div>
+                    <div><strong>Place:</strong> ${sos.location_name}</div>
+                    <div><strong>Coords:</strong> ${sos.latitude.toFixed(4)}, ${sos.longitude.toFixed(4)}</div>
+                    <div><strong>Message:</strong> "${sos.message}"</div>
+                    ${assignedInfo}
+                    <div style="font-size: 0.75rem; color: #777;" class="mt-1"><i class="bi bi-clock"></i> ${sos.created_at}</div>
+                </div>
+                <div class="mt-2 text-end">
+                    <a href="{{ url_for('admin.admin_sos_list') }}?filter=${sos.status}" class="btn btn-xs btn-primary text-white" style="font-size: 0.75rem; padding: 2px 8px;">
+                        Coordinate in SOS Queue &rarr;
+                    </a>
+                </div>
+            </div>
+        `;
+
+        const [dispLat, dispLon] = getDistributedCoords(sos.latitude, sos.longitude);
+        const marker = L.marker([dispLat, dispLon], { icon: customIcon }).addTo(map);
+        marker.bindPopup(popupContent);
+        boundsGroup.push([sos.latitude, sos.longitude]);
+    });
+
+    // 3. Render Volunteer Markers Function
+    function renderVolunteerMarkers(vols) {
+        volunteerLayer.clearLayers();
+        let liveCount = 0;
+
+        vols.forEach(function(vol) {
+            if (!vol.latitude || !vol.longitude) return;
+
+            let markerClass = 'vol-recent-marker';
+            let badgeColor = 'bg-primary';
+
+            if (vol.freshness === 'LIVE') {
+                markerClass = 'vol-live-marker';
+                badgeColor = 'bg-success';
+                liveCount++;
+            } else if (vol.freshness === 'STALE') {
+                markerClass = 'vol-stale-marker';
+                badgeColor = 'bg-warning text-dark';
+            } else if (vol.freshness === 'OFFLINE') {
+                markerClass = 'vol-offline-marker';
+                badgeColor = 'bg-secondary';
+            }
+
+            const volIcon = L.divIcon({
+                className: 'custom-vol-icon',
+                html: `<div class="${markerClass}" style="width:26px;height:26px;line-height:22px;"><i class="bi bi-person-badge-fill"></i></div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13]
+            });
+
+            const freshnessText = vol.freshness === 'LIVE' ? 'LIVE (&le;60s)' :
+                                  (vol.freshness === 'RECENT' ? 'RECENT (&le;5m)' :
+                                  (vol.freshness === 'STALE' ? 'STALE (>5m)' : 'OFFLINE'));
+
+            const sharingBadge = vol.is_sharing ?
+                '<span class="badge bg-success font-monospace" style="font-size:0.68rem;"><i class="bi bi-broadcast me-1"></i>SHARING ON</span>' :
+                '<span class="badge bg-secondary font-monospace" style="font-size:0.68rem;">SHARING OFF</span>';
+
+            const activeAssignBadge = vol.active_assignment_sos_id ?
+                `<div class="mt-1 p-1 bg-warning-subtle border border-warning rounded" style="font-size:0.75rem;">
+                    <strong>Assigned:</strong> SOS #${vol.active_assignment_sos_id} (${vol.active_assignment_status || 'ASSIGNED'})
+                 </div>` : '';
+
+            let volPopup;
+            if (vol.can_contact && vol.phone) {
+                volPopup = `
+                    <div style="min-width: 260px; font-family: system-ui, sans-serif;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="font-size: 0.95rem;">${vol.name}</strong>
+                            <span class="badge ${badgeColor}">${vol.availability === 'BUSY' ? '🟡 BUSY' : '🟢 ONLINE'}</span>
+                        </div>
+                        <div style="font-size: 0.83rem; color: #444; margin-bottom: 6px;">
+                            <div><strong>Volunteer ID:</strong> #${vol.id}</div>
+                            <div><strong>Phone:</strong> <span class="font-monospace fw-bold text-dark">${vol.phone}</span></div>
+                            <div><strong>Availability:</strong> <span class="badge ${vol.availability === 'BUSY' ? 'bg-danger' : 'bg-success'}">${vol.availability || 'AVAILABLE'}</span> ${sharingBadge}</div>
+                            <div><strong>Coords:</strong> ${vol.latitude.toFixed(4)}, ${vol.longitude.toFixed(4)}</div>
+                            ${vol.accuracy ? `<div><strong>Accuracy:</strong> &plusmn;${vol.accuracy.toFixed(0)}m</div>` : ''}
+                            ${activeAssignBadge}
+                            <div style="font-size: 0.75rem; color: #777;" class="mt-1">
+                                <i class="bi bi-clock-history"></i> Last update: ${vol.last_seen || vol.last_update || 'Just now'}
+                            </div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top d-flex flex-wrap gap-1">
+                            <a href="tel:${vol.phone}" class="btn btn-xs btn-outline-success" style="font-size: 0.75rem; padding: 2px 6px;">
+                                <i class="bi bi-telephone-fill me-1"></i>Call Volunteer
+                            </a>
+                            <a href="https://wa.me/91${vol.phone}?text=Hello%20${encodeURIComponent(vol.name)}%2C%20this%20is%20Wari%20Mitra%20Control%20Center." target="_blank" rel="noopener noreferrer" class="btn btn-xs btn-success" style="font-size: 0.75rem; padding: 2px 6px;">
+                                <i class="bi bi-whatsapp me-1"></i>WhatsApp
+                            </a>
+                            <a href="/admin/volunteers/${vol.id}" class="btn btn-xs btn-outline-primary" style="font-size: 0.75rem; padding: 2px 6px;">
+                                <i class="bi bi-person-badge me-1"></i>View Profile
+                            </a>
+                            <a href="/admin/sos?q=${encodeURIComponent(vol.name)}" class="btn btn-xs btn-primary" style="font-size: 0.75rem; padding: 2px 6px;">
+                                <i class="bi bi-shield-exclamation me-1"></i>Assign to SOS
+                            </a>
+                        </div>
+                    </div>
+                `;
+            } else {
+                volPopup = `
+                    <div style="min-width: 260px; font-family: system-ui, sans-serif;">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <strong style="font-size: 0.95rem;">${vol.name}</strong>
+                            <span class="badge bg-danger">🔴 OFFLINE</span>
+                        </div>
+                        <div style="font-size: 0.83rem; color: #444; margin-bottom: 6px;">
+                            <div><strong>Volunteer ID:</strong> #${vol.id}</div>
+                            <div><strong>Last seen:</strong> ${vol.last_seen || 'Unknown'}</div>
+                            <div><strong>Last known location:</strong> ${vol.latitude ? vol.latitude.toFixed(4) + ', ' + vol.longitude.toFixed(4) : 'Unknown'}</div>
+                            <div><strong>Assignment:</strong> ${vol.active_assignment_sos_id ? 'SOS #' + vol.active_assignment_sos_id + ' (' + (vol.active_assignment_status || 'ASSIGNED') + ')' : 'None'}</div>
+                        </div>
+                        <div class="p-2 bg-light border rounded small text-danger mb-2" style="font-size: 0.75rem;">
+                            <i class="bi bi-exclamation-octagon me-1"></i>Volunteer is currently offline and cannot be contacted through the operational contact controls.
+                        </div>
+                        <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                            <a href="/admin/volunteers/${vol.id}" class="btn btn-xs btn-outline-primary" style="font-size: 0.75rem; padding: 2px 8px;">
+                                <i class="bi bi-person-badge me-1"></i>View Profile
+                            </a>
+                            <span class="text-muted small fst-italic" style="font-size: 0.70rem;">Contact controls unavailable</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+
+
+            const marker = L.marker([vol.latitude, vol.longitude], { icon: volIcon });
+            marker.bindPopup(volPopup);
+            volunteerLayer.addLayer(marker);
+            boundsGroup.push([vol.latitude, vol.longitude]);
+        });
+
+        // Update stats
+        const statTotal = document.getElementById('statVolTotal');
+        const statLive = document.getElementById('statVolLive');
+        if (statTotal) statTotal.textContent = vols.length;
+        if (statLive) statLive.textContent = `${liveCount} live`;
+    }
+
+    // Initial render of volunteer markers from backend embedded payload
+    renderVolunteerMarkers(volunteerMarkersData);
+
+    // Dynamic polling function for live volunteer coordinates
+    function refreshVolunteers() {
+        fetch("{{ url_for('admin.api_admin_volunteer_locations') }}")
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && Array.isArray(data.volunteers)) {
+                    renderVolunteerMarkers(data.volunteers);
+                }
+            })
+            .catch(err => {
+                console.warn('Volunteer location auto-refresh warning:', err);
+            });
+    }
+
+    // Auto-refresh volunteers every 20 seconds
+    setInterval(refreshVolunteers, 20000);
+
+    // Manual Refresh button
+    const btnRefreshVols = document.getElementById('btnRefreshVols');
+    if (btnRefreshVols) {
+        btnRefreshVols.addEventListener('click', function() {
+            btnRefreshVols.disabled = true;
+            btnRefreshVols.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Refreshing...';
+            fetch("{{ url_for('admin.api_admin_volunteer_locations') }}")
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && Array.isArray(data.volunteers)) {
+                        renderVolunteerMarkers(data.volunteers);
+                    }
+                })
+                .finally(() => {
+                    setTimeout(() => {
+                        btnRefreshVols.disabled = false;
+                        btnRefreshVols.innerHTML = '<i class="bi bi-arrow-repeat me-1"></i>Refresh Volunteers';
+                    }, 500);
+                });
+        });
+    }
+
+    // 4. Render Facility Markers
+    facilityMarkersData.forEach(function(fac) {
+        if (!fac.latitude || !fac.longitude) return;
+
+        let markerColor = '#0d6efd';
+        let facIconName = 'bi-geo-alt-fill';
+
+        const typeLower = (fac.type || '').toLowerCase();
+        if (typeLower.includes('medical') || typeLower.includes('hospital')) {
+            markerColor = '#dc3545';
+            facIconName = 'bi-hospital-fill';
+        } else if (typeLower.includes('emergency') || typeLower.includes('police')) {
+            markerColor = '#0dcaf0';
+            facIconName = 'bi-shield-fill';
+        } else if (typeLower.includes('food') || typeLower.includes('water') || typeLower.includes('shelter')) {
+            markerColor = '#ffc107';
+            facIconName = 'bi-cup-hot-fill';
+        }
+
+        const facIcon = L.divIcon({
+            className: 'custom-facility-icon',
+            html: `<div style="background-color:${markerColor};width:22px;height:22px;border-radius:50%;border:2px solid white;color:white;text-align:center;line-height:20px;font-size:11px;box-shadow:0 2px 6px rgba(0,0,0,0.3);"><i class="bi ${facIconName}"></i></div>`,
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+
+        const facPopup = `
+            <div style="min-width: 180px; font-family: system-ui, sans-serif;">
+                <div class="fw-bold" style="color:#222; font-size: 0.9rem;">${fac.name}</div>
+                <span class="badge bg-secondary mb-1" style="font-size:0.7rem;">${fac.type}</span>
+                <div style="font-size: 0.8rem; color: #555;">${fac.description || 'Route Facility'}</div>
+                <div style="font-size: 0.75rem; color: #888;" class="mt-1">Coords: ${fac.latitude.toFixed(4)}, ${fac.longitude.toFixed(4)}</div>
+            </div>
+        `;
+
+        const marker = L.marker([fac.latitude, fac.longitude], { icon: facIcon }).addTo(map);
+        marker.bindPopup(facPopup);
+        boundsGroup.push([fac.latitude, fac.longitude]);
+    });
+
+    // 5. Fit Bounds Button
+    document.getElementById('btnFitBounds').addEventListener('click', function() {
+        if (boundsGroup.length > 0) {
+            map.fitBounds(boundsGroup, { padding: [40, 40] });
+        }
+    });
+
+    // Initial fit bounds if coordinates exist
+    if (boundsGroup.length > 0) {
+        map.fitBounds(boundsGroup, { padding: [40, 40] });
+    }
+});
+</script>
+{% endblock %}

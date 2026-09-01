@@ -1,0 +1,444 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Operational Overview{% endblock %}
+
+{% block admin_content %}
+<!-- Header Section with Auto-Refresh & Action Controls -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-speedometer2 text-primary me-2"></i>AstraOps AI Operational Summary
+        </h2>
+
+        <p class="text-muted mb-0">
+            Real-time command center overview for pilgrimage operations, emergency alerts, and system health.
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Optional Auto-Refresh Toggle -->
+        <div class="auto-refresh-pill">
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" id="autoRefreshToggle" role="switch">
+                <label class="form-check-label small fw-semibold text-secondary" for="autoRefreshToggle">
+                    Auto-Refresh (<span id="refreshCountdown">30s</span>)
+                </label>
+            </div>
+        </div>
+
+        <!-- Manual Refresh Button -->
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="btn btn-outline-primary fw-bold" id="manualRefreshBtn">
+            <i class="bi bi-arrow-clockwise me-1"></i> Refresh Dashboard
+        </a>
+
+        <!-- Live SOS Attention Pill -->
+        {% if stats.pending_sos > 0 %}
+        <span class="badge bg-danger px-3 py-2 fs-6 animate-pulse">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ stats.pending_sos }} Pending SOS
+        </span>
+        {% else %}
+        <span class="badge bg-success px-3 py-2 fs-6">
+            <i class="bi bi-check-circle-fill me-1"></i> System Active
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Operational Status Attention Banner -->
+{% if stats.pending_sos > 0 %}
+<div class="alert alert-danger border-2 shadow-sm d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-exclamation-octagon-fill display-6 me-3 text-danger"></i>
+        <div>
+            <h5 class="fw-bold mb-0">ATTENTION REQUIRED — {{ stats.pending_sos }} Pending Emergency Request(s)</h5>
+            <div class="small">Immediate operational review and dispatch action required along the Wari route.</div>
+        </div>
+    </div>
+    <a href="{{ url_for('admin.admin_sos_list', filter='pending') }}" class="btn btn-danger fw-bold">
+        Manage Pending Emergency SOS <i class="bi bi-arrow-right ms-1"></i>
+    </a>
+</div>
+{% else %}
+<div class="alert alert-success border-2 shadow-sm d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center">
+        <i class="bi bi-check-circle-fill display-6 me-3 text-success"></i>
+        <div>
+            <h5 class="fw-bold mb-0">ALL CLEAR — SYSTEM OPERATIONAL</h5>
+            <div class="small text-secondary">No active pending emergency alerts. All reported requests resolved.</div>
+        </div>
+    </div>
+    <a href="{{ url_for('admin.admin_sos_list') }}" class="btn btn-outline-success btn-sm">
+        View SOS History Log
+    </a>
+</div>
+{% endif %}
+
+<!-- 1. Real System Metric Cards -->
+<div class="row g-3 mb-4">
+    <!-- Volunteer Requests Card -->
+    <div class="col-md-4 col-lg">
+        <div class="metric-card border-start border-4 {% if stats.pending_volunteer_requests and stats.pending_volunteer_requests > 0 %}border-warning{% else %}border-success{% endif %}">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-label">VOLUNTEER REQUESTS</div>
+                    <div class="metric-value {% if stats.pending_volunteer_requests and stats.pending_volunteer_requests > 0 %}text-warning{% else %}text-success{% endif %}">
+                        {{ stats.pending_volunteer_requests or 0 }}
+                    </div>
+                </div>
+                <div class="metric-icon {% if stats.pending_volunteer_requests and stats.pending_volunteer_requests > 0 %}text-warning{% else %}text-success{% endif %}">
+                    <i class="bi bi-person-check-fill"></i>
+                </div>
+            </div>
+            <div class="mt-2 small d-flex justify-content-between align-items-center">
+                {% if stats.pending_volunteer_requests and stats.pending_volunteer_requests > 0 %}
+                <span class="badge bg-warning text-dark font-monospace">ATTENTION REQUIRED</span>
+                <a href="{{ url_for('admin.admin_volunteer_requests', status='PENDING') }}" class="text-primary fw-bold text-decoration-none">Review Requests &rarr;</a>
+                {% else %}
+                <span class="badge bg-success font-monospace">ALL CLEAR</span>
+                <a href="{{ url_for('admin.admin_volunteer_requests') }}" class="text-muted text-decoration-none">View All</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- SOS Requests Card -->
+    <div class="col-md-4 col-lg">
+        <div class="metric-card border-sos">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-label">Total SOS Requests</div>
+                    <div class="metric-value text-danger">{{ stats.total_sos }}</div>
+                </div>
+                <div class="metric-icon text-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small d-flex justify-content-between align-items-center">
+                <span><strong class="text-warning">{{ stats.pending_sos }}</strong> pending</span>
+                <span><strong class="text-success">{{ stats.resolved_sos }}</strong> resolved</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registered Pilgrims Card -->
+    <div class="col-md-4 col-lg">
+        <div class="metric-card border-users">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-label">Registered Pilgrims</div>
+                    <div class="metric-value text-primary">{{ stats.total_users }}</div>
+                </div>
+                <div class="metric-icon text-primary">
+                    <i class="bi bi-people-fill"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                Active user accounts in database
+            </div>
+        </div>
+    </div>
+
+    <!-- Listed Facilities Card -->
+    <div class="col-md-6 col-lg">
+        <div class="metric-card border-facilities">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-label">Route Facilities</div>
+                    <div class="metric-value text-success">{{ stats.total_facilities }}</div>
+                </div>
+                <div class="metric-icon text-success">
+                    <i class="bi bi-hospital-fill"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                Medical, food, water &amp; shelter points
+            </div>
+        </div>
+    </div>
+
+    <!-- Route Itinerary Days Card -->
+    <div class="col-md-6 col-lg">
+        <div class="metric-card border-schedule">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="metric-label">Route Itinerary</div>
+                    <div class="metric-value text-warning">{{ stats.total_schedule_days }} Days</div>
+                </div>
+                <div class="metric-icon text-warning">
+                    <i class="bi bi-calendar-event-fill"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-muted small">
+                Dehu to Pandharpur route halts
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 2. Operational Attention & Alerts Notification Center -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-shield-exclamation text-danger me-2"></i>SOS Operational Status Summary
+                </h5>
+                <span class="badge bg-light text-dark border">Real Database Counts</span>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center g-3">
+                    <div class="col-md-3 text-center border-end">
+                        <div class="text-muted small">Total SOS Received</div>
+                        <div class="display-6 fw-bold text-dark">{{ sos_summary.total }}</div>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <div class="text-muted small">Pending Action</div>
+                        <div class="display-6 fw-bold text-warning">{{ sos_summary.pending }}</div>
+                    </div>
+                    <div class="col-md-3 text-center border-end">
+                        <div class="text-muted small">Resolved Alerts</div>
+                        <div class="display-6 fw-bold text-success">{{ sos_summary.resolved }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="small text-muted mb-1">Latest Emergency Alert:</div>
+                        {% if sos_summary.latest_time %}
+                        <div class="fw-bold text-dark mb-1">
+                            <i class="bi bi-clock me-1 text-danger"></i>#{{ sos_summary.latest_id }} — {{ sos_summary.latest_time }}
+                        </div>
+                        <div class="small text-secondary mb-2">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i>{{ sos_summary.latest_location }}
+                        </div>
+                        <a href="{{ url_for('admin.admin_sos_list') }}" class="btn btn-sm btn-outline-danger w-100 fw-bold">
+                            Open SOS Management <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                        {% else %}
+                        <span class="text-muted italic">No emergency requests recorded</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 3. Recent SOS Table & Real Activity Stream -->
+<div class="row g-4 mb-4">
+    <!-- Recent Emergency SOS Table -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-bell-fill text-danger me-2"></i>Recent SOS Emergency Alerts
+                </h5>
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Live Log</span>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_sos %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Pilgrim</th>
+                                <th>Location</th>
+                                <th>Message</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sos in recent_sos %}
+                            <tr class="{% if sos.status == 'pending' %}table-warning{% endif %}">
+                                <td class="fw-bold">#{{ sos.id }}</td>
+                                <td>
+                                    <div class="fw-semibold small">{{ sos.user_name }}</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">{{ sos.user_phone }}</div>
+                                </td>
+                                <td>
+                                    <span class="small fw-semibold text-dark">{{ sos.location_name }}</span>
+                                    <div class="text-muted font-monospace" style="font-size: 0.7rem;">{{ "%.3f"|format(sos.latitude) }}, {{ "%.3f"|format(sos.longitude) }}</div>
+                                </td>
+                                <td class="small">{{ sos.message or '—' }}</td>
+                                <td>
+                                    {% if sos.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark border border-warning">Pending</span>
+                                    {% else %}
+                                    <span class="badge bg-success">Resolved</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-shield-check display-4 text-success d-block mb-2"></i>
+                    No emergency SOS requests recorded yet.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Admin Audit Log Stream -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-clock-history text-secondary me-2"></i>Recent Admin Activity
+                </h5>
+                <a href="{{ url_for('admin.admin_activity_list') }}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.8rem;">
+                    View All Activity <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-3" style="max-height: 400px; overflow-y: auto;">
+                {% if recent_admin_activities %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_admin_activities %}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <span class="badge {% if item.action_type == 'SOS_RESOLVED' %}bg-success-subtle text-success border border-success-subtle{% elif 'FACILITY' in item.action_type %}bg-info-subtle text-info border border-info-subtle{% elif 'AUTH' in item.action_type or 'LOGIN' in item.action_type or 'LOGOUT' in item.action_type %}bg-primary-subtle text-primary border border-primary-subtle{% else %}bg-light text-dark border{% endif %} font-monospace" style="font-size: 0.65rem;">
+                                {{ item.action_type }}
+                            </span>
+                            <span class="text-muted" style="font-size: 0.7rem;">
+                                <i class="bi bi-clock me-1"></i>{{ item.created_at }}
+                            </span>
+                        </div>
+                        <div class="small text-dark fw-semibold">{{ item.description }}</div>
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            by {{ item.admin_name or 'Admin' }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif recent_activity %}
+                <div class="list-group list-group-flush">
+                    {% for item in recent_activity %}
+                    <div class="list-group-item px-0 py-2 border-bottom">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi {{ item.icon }} fs-6"></i>
+                                <span class="fw-semibold small">{{ item.title }}</span>
+                            </div>
+                            <span class="badge {{ item.status_badge }} font-monospace" style="font-size: 0.65rem;">{{ item.status_text }}</span>
+                        </div>
+                        <div class="small text-secondary">{{ item.description }}</div>
+                        <div class="text-muted mt-1" style="font-size: 0.7rem;">
+                            <i class="bi bi-clock me-1"></i>{{ item.timestamp }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">No recent database activity found.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 4. Quick Action Navigation Cards -->
+<div class="mb-4">
+    <h5 class="fw-bold text-dark mb-3">
+        <i class="bi bi-grid-fill text-warning me-2"></i>Admin Module Quick Navigation
+    </h5>
+    <div class="row g-3">
+        {% for action in quick_actions %}
+        <div class="col-md-4 col-lg-2-4">
+            <a href="{{ action.link }}" class="text-decoration-none text-dark">
+                <div class="card border-0 shadow-sm h-100 p-3 bg-white hover-shadow transition">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <i class="bi {{ action.icon }} fs-3"></i>
+                        <span class="badge {% if action.link != '#' %}bg-danger text-white{% else %}bg-light text-dark border{% endif %}">{{ action.phase }}</span>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-1">{{ action.title }}</h6>
+                    <p class="text-muted small mb-0">{{ action.desc }}</p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- 5. System Infrastructure Status Section -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-cpu-fill text-info me-2"></i>System Infrastructure &amp; Integration Status
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for service, status in system_status.items() %}
+            <div class="col-md-3">
+                <div class="p-3 rounded bg-light border d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="small text-muted text-capitalize">{{ service.replace('_', ' ') }}</div>
+                        <div class="fw-bold text-dark small">{{ status.split(' ')[0] }}</div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill fs-6">
+                        <i class="bi bi-check-circle-fill"></i>
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block admin_scripts %}
+<script>
+    // Lightweight Optional Auto-Refresh Mechanism
+    (function() {
+        const toggle = document.getElementById('autoRefreshToggle');
+        const countdownEl = document.getElementById('refreshCountdown');
+        const REFRESH_INTERVAL = 30; // seconds
+        let secondsLeft = REFRESH_INTERVAL;
+        let timer = null;
+
+        // Load saved state
+        const savedState = localStorage.getItem('adminAutoRefresh') === 'true';
+        if (toggle) {
+            toggle.checked = savedState;
+            if (savedState) {
+                startTimer();
+            }
+
+            toggle.addEventListener('change', function() {
+                localStorage.setItem('adminAutoRefresh', toggle.checked);
+                if (toggle.checked) {
+                    startTimer();
+                } else {
+                    stopTimer();
+                }
+            });
+        }
+
+        function startTimer() {
+            secondsLeft = REFRESH_INTERVAL;
+            updateDisplay();
+            if (timer) clearInterval(timer);
+            timer = setInterval(function() {
+                secondsLeft--;
+                updateDisplay();
+                if (secondsLeft <= 0) {
+                    window.location.reload();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timer) clearInterval(timer);
+            if (countdownEl) countdownEl.textContent = '30s';
+        }
+
+        function updateDisplay() {
+            if (countdownEl) {
+                countdownEl.textContent = secondsLeft + 's';
+            }
+        }
+    })();
+</script>
+{% endblock %}

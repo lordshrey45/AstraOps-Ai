@@ -1,0 +1,87 @@
+{% extends "volunteer/base.html" %}
+
+{% block title %}Volunteer Profile{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-xl-6">
+
+        <!-- Profile Header Card -->
+        <div class="card vol-card p-4 mb-3 bg-white text-center">
+            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mx-auto mb-3 shadow-sm" style="width: 72px; height: 72px;">
+                <i class="bi bi-person-badge-fill display-6"></i>
+            </div>
+            <h4 class="fw-bold text-dark mb-1">{{ volunteer.name }}</h4>
+            <div class="text-muted small font-monospace mb-2">Registered Field Volunteer #{{ volunteer.id }}</div>
+
+            <div>
+                <span class="badge {% if volunteer.status == 'ACTIVE' %}bg-success{% else %}bg-secondary{% endif %} px-3 py-1 rounded-pill">
+                    Status: {{ volunteer.status }}
+                </span>
+                <span class="badge {% if volunteer.availability == 'AVAILABLE' %}bg-primary{% else %}bg-secondary{% endif %} px-3 py-1 rounded-pill ms-1">
+                    Duty: {{ volunteer.availability }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Profile Information Details Card -->
+        <div class="card vol-card p-4 mb-3 bg-white">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-info-circle-fill text-primary me-2"></i>Account &amp; Duty Information
+            </h5>
+
+            <ul class="list-group list-group-flush small">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Volunteer ID</span>
+                    <span class="fw-bold font-monospace text-dark">#{{ volunteer.id }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Full Name</span>
+                    <span class="fw-bold text-dark">{{ volunteer.name }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Registered Phone</span>
+                    <span class="fw-bold font-monospace text-dark">{{ volunteer.phone }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Registration Date</span>
+                    <span class="text-dark">{{ volunteer.created_at or '2026-08-01' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Availability Status</span>
+                    <span class="badge {% if volunteer.availability == 'AVAILABLE' %}bg-success{% else %}bg-secondary{% endif %}">
+                        {{ volunteer.availability }}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Location Sharing</span>
+                    <span class="badge {% if volunteer.is_sharing %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if volunteer.is_sharing %}SHARING ACTIVE{% else %}STOPPED{% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Last Known Coordinates</span>
+                    <span class="font-monospace text-dark">
+                        {% if volunteer.latitude and volunteer.longitude %}
+                            {{ "%.4f"|format(volunteer.latitude) }}, {{ "%.4f"|format(volunteer.longitude) }}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
+                    <span class="text-muted">Last Location Update</span>
+                    <span class="text-dark">{{ volunteer.location_updated_at or 'Never' }}</span>
+                </li>
+            </ul>
+
+            <div class="mt-4 pt-3 border-top d-grid gap-2">
+                <a href="{{ url_for('volunteer.volunteer_dashboard') }}" class="btn btn-primary fw-semibold py-2">
+                    <i class="bi bi-speedometer2 me-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

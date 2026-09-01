@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('schedule_title') }}{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <h1><i class="bi bi-calendar3 me-2"></i>{{ t('schedule_title') }}</h1>
+    <p>{{ t('schedule_subtitle') }}</p>
+</div>
+
+<div class="alert alert-info py-2 mb-3">
+    <small><i class="bi bi-info-circle me-1"></i> {{ t('demo_data_disclaimer') }}</small>
+</div>
+
+{% if schedule %}
+<div class="table-responsive">
+    <table class="table table-hover card-wari">
+        <thead class="sticky-top bg-white shadow-sm">
+            <tr>
+                <th class="sticky-day-header" style="color: #000000 !important;">{{ t('day') }}</th>
+                <th>Date</th>
+                <th>{{ t('halt_village') }}</th>
+                <th>{{ t('distance_remaining') }}</th>
+                <th>{{ t('start_time') }}</th>
+                <th>{{ t('end_time') }}</th>
+                <th>{{ t('notes') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in schedule %}
+            <tr>
+                <td><span class="badge bg-wari sticky-day-badge" style="color: #000000 !important;">{{ t('day') }} {{ item.day_number }}</span></td>
+                <td>{{ item.date or '—' }}</td>
+                <td><strong>{{ item.halt_village }}</strong></td>
+                <td>{{ item.distance_km }} km</td>
+                <td>{{ item.start_time or '—' }}</td>
+                <td>{{ item.end_time or '—' }}</td>
+                <td><small class="text-muted">{{ item.notes or '—' }}</small></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="text-center text-muted py-5">
+    <i class="bi bi-calendar-x display-4"></i>
+    <p class="mt-3">No schedule data available.</p>
+</div>
+{% endif %}
+
+{% endblock %}

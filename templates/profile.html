@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('profile_title') }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1><i class="bi bi-person-circle me-2"></i>{{ t('profile_title') }}</h1>
+            <p>{{ t('profile_subtitle') }}</p>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="card card-wari mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-person-fill me-2"></i>{{ t('personal_info') }}</h5>
+                    <button class="btn btn-wari btn-sm" id="editProfileBtn">
+                        <i class="bi bi-pencil-fill me-1"></i> {{ t('edit') }}
+                    </button>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="profileDisplay">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">{{ t('name') }}</small>
+                                <strong id="displayName">{{ user.name }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">{{ t('phone') }}</small>
+                                <strong id="displayPhone">{{ user.phone }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">Account Role</small>
+                                {% if user.is_admin %}
+                                <span class="badge bg-dark text-warning"><i class="bi bi-shield-lock-fill me-1"></i>Administrator</span>
+                                {% elif user.is_volunteer %}
+                                <span class="badge bg-primary"><i class="bi bi-person-badge-fill me-1"></i>Field Volunteer</span>
+                                {% else %}
+                                <span class="badge bg-secondary"><i class="bi bi-person-fill me-1"></i>Pilgrim</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">{{ t('member_since') }}</small>
+                                <strong>{{ user.created_at }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- Edit Mode -->
+                <div id="profileEdit" class="d-none">
+                    <form id="profileForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editName" class="form-label">{{ t('name') }}</label>
+                                <input type="text" class="form-control" id="editName"
+                                       value="{{ user.name }}" maxlength="100" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">{{ t('phone') }}</label>
+                                <input type="text" class="form-control" value="{{ user.phone }}" disabled
+                                       title="Phone number cannot be changed">
+                                <small class="text-muted">Phone number cannot be changed.</small>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-wari" id="saveProfileBtn">
+                                <i class="bi bi-check-lg me-1"></i> {{ t('save_changes') }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn">
+                                {{ t('cancel') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Information Card -->
+        <div class="card card-wari mb-4 profile-emergency-card">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-shield-plus text-danger me-2"></i>{{ t('emergency_info') }}</h5>
+                    <button class="btn btn-outline-danger btn-sm" id="editEmergencyBtn">
+                        <i class="bi bi-pencil-fill me-1"></i> {{ t('edit') }}
+                    </button>
+                </div>
+
+                <div class="alert alert-info py-2 mb-3">
+                    <small><i class="bi bi-info-circle me-1"></i>
+                    {{ t('emergency_note') }}</small>
+                </div>
+
+                <!-- Display Mode -->
+                <div id="emergencyDisplay">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">{{ t('emergency_contact') }}</small>
+                                <strong id="displayEmergency">
+                                    {% if user.emergency_contact %}
+                                        {{ user.emergency_contact }}
+                                        <a href="tel:{{ user.emergency_contact }}" class="ms-2 text-danger" title="Call">
+                                            <i class="bi bi-telephone-fill"></i>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted fst-italic">{{ t('not_provided') }}</span>
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="profile-field">
+                                <small class="text-muted d-block">{{ t('medical_info') }}</small>
+                                <strong id="displayMedical">
+                                    {% if user.medical_info %}
+                                        {{ user.medical_info }}
+                                    {% else %}
+                                        <span class="text-muted fst-italic">{{ t('not_provided') }}</span>
+                                    {% endif %}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Mode -->
+                <div id="emergencyEdit" class="d-none">
+                    <form id="emergencyForm">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="editEmergencyContact" class="form-label">{{ t('emergency_contact') }}</label>
+                                <input type="text" class="form-control" id="editEmergencyContact"
+                                       value="{{ user.emergency_contact or '' }}"
+                                       placeholder="Phone number or name"
+                                       maxlength="100">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="editMedicalInfo" class="form-label">{{ t('medical_info') }}</label>
+                                <textarea class="form-control" id="editMedicalInfo" rows="2"
+                                          placeholder="Allergies, conditions, medications..."
+                                          maxlength="500">{{ user.medical_info or '' }}</textarea>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-danger" id="saveEmergencyBtn">
+                                <i class="bi bi-check-lg me-1"></i> {{ t('save_emergency_info') }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="cancelEmergencyBtn">
+                                {{ t('cancel') }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOS History -->
+        <div class="card card-wari mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>{{ t('sos_history_title') }}</h5>
+
+                {% if sos_history %}
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Message</th>
+                                <th>{{ t('status') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sos in sos_history %}
+                            <tr>
+                                <td>#{{ sos.id }}</td>
+                                <td><small>{{ sos.created_at }}</small></td>
+                                <td><small><strong>{{ get_location_name(sos.latitude, sos.longitude) }}</strong></small></td>
+                                <td><small>{{ sos.message or '—' }}</small></td>
+                                <td>
+                                    {% if sos.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">{{ t('status_pending') }}</span>
+                                    {% else %}
+                                    <span class="badge bg-success">{{ t('status_resolved') }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-shield-check display-6 d-block mb-2"></i>
+                    <p>{{ t('no_sos_yet') }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-3 mb-4">
+            <div class="col-6">
+                <a href="/sos" class="btn btn-outline-danger w-100">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ t('nav_sos') }}
+                </a>
+            </div>
+            <div class="col-6">
+                <a href="/" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-house me-1"></i> {{ t('nav_home') }}
+                </a>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/profile.js"></script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Volunteer Login — AstraOps AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-3">
+    <div class="col-md-6 col-lg-5">
+
+        <!-- Volunteer Login Card -->
+        <div class="card mt-3 shadow border-0 rounded-4" style="background: #ffffff; border-top: 4px solid #0d6efd !important;">
+            <div class="card-header text-center bg-white border-0 pt-4 pb-2">
+                <div class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded-circle mb-2 shadow-sm" style="width: 56px; height: 56px;">
+                    <i class="bi bi-person-badge-fill fs-3"></i>
+                </div>
+                <div class="mb-1">
+                    <span class="badge bg-primary text-white font-monospace" style="font-size: 0.7rem;">
+                        <i class="bi bi-person-check-fill me-1"></i>FIELD VOLUNTEER PORTAL
+                    </span>
+                </div>
+                <h4 class="fw-bold mb-1 text-dark">Volunteer Login</h4>
+                <p class="text-muted small mb-0 font-monospace">
+                    AstraOps AI Volunteer Operations &amp; Safety Dashboard
+                </p>
+            </div>
+            <div class="card-body p-4 pt-2">
+                <form method="POST" action="{{ url_for('auth.login_volunteer') }}" id="volunteerLoginForm" novalidate>
+
+                    <!-- Phone Number -->
+                    <div class="mb-3">
+                        <label for="phone" class="form-label fw-semibold">
+                            <i class="bi bi-telephone-fill text-primary"></i> Registered Phone Number
+                        </label>
+                        <input type="tel" class="form-control form-control-lg fs-6" id="phone" name="phone"
+                               placeholder="10-digit registered phone number"
+                               value="{{ phone if phone else '' }}" required autofocus>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">
+                            <i class="bi bi-key-fill text-primary"></i> Password
+                        </label>
+                        <input type="password" class="form-control form-control-lg fs-6" id="password" name="password"
+                               placeholder="Enter your volunteer password" required>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg fw-semibold" id="volunteerLoginBtn">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Sign In to Volunteer Dashboard
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Back to Login Selection -->
+                <div class="text-center mt-4 pt-2 border-top">
+                    <a href="{{ url_for('auth.login') }}" class="text-decoration-none small text-muted">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Login Selection
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,278 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Activity &amp; Audit History{% endblock %}
+
+{% block admin_content %}
+<!-- Header Section -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div>
+        <h2 class="fw-bold text-dark mb-1">
+            <i class="bi bi-clock-history text-secondary me-2"></i>Admin Activity &amp; Audit History
+        </h2>
+        <p class="text-muted mb-0">
+            Immutable, read-only operational audit trail of all administrative actions, emergency resolutions, and registry modifications.
+        </p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('admin.admin_activity_list') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-clockwise me-1"></i> Reset Filters
+        </a>
+    </div>
+</div>
+
+<!-- 1. Audit Metric Summary Cards -->
+<div class="row g-3 mb-4">
+    <!-- Total Activities -->
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100 border-start border-4 border-dark">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">Total Logged</div>
+                    <div class="display-6 fw-bold text-dark">{{ stats.total }}</div>
+                </div>
+                <i class="bi bi-journal-text fs-2 text-dark opacity-50"></i>
+            </div>
+            <div class="small text-muted mt-2">All recorded events</div>
+        </div>
+    </div>
+
+    <!-- Today's Events -->
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100 border-start border-4 border-primary">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">Today</div>
+                    <div class="display-6 fw-bold text-primary">{{ stats.today }}</div>
+                </div>
+                <i class="bi bi-calendar-check fs-2 text-primary opacity-50"></i>
+            </div>
+            <div class="small text-muted mt-2">Actions today</div>
+        </div>
+    </div>
+
+    <!-- SOS Actions -->
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100 border-start border-4 border-success">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">SOS Actions</div>
+                    <div class="display-6 fw-bold text-success">{{ stats.sos }}</div>
+                </div>
+                <i class="bi bi-shield-check fs-2 text-success opacity-50"></i>
+            </div>
+            <div class="small text-muted mt-2">Emergency resolves</div>
+        </div>
+    </div>
+
+    <!-- Facility Actions -->
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100 border-start border-4 border-info">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">Facility Ops</div>
+                    <div class="display-6 fw-bold text-info">{{ stats.facility }}</div>
+                </div>
+                <i class="bi bi-hospital fs-2 text-info opacity-50"></i>
+            </div>
+            <div class="small text-muted mt-2">Created/edited/deleted</div>
+        </div>
+    </div>
+
+    <!-- Auth Events -->
+    <div class="col-md-2-4 col-sm-6">
+        <div class="card border-0 shadow-sm p-3 bg-white h-100 border-start border-4 border-warning">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <div class="text-muted small fw-semibold">Auth Events</div>
+                    <div class="display-6 fw-bold text-warning">{{ stats.auth }}</div>
+                </div>
+                <i class="bi bi-key-fill fs-2 text-warning opacity-50"></i>
+            </div>
+            <div class="small text-muted mt-2">Admin login &amp; logout</div>
+        </div>
+    </div>
+</div>
+
+<!-- 2. Search & Filter Bar -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+        <form method="GET" action="{{ url_for('admin.admin_activity_list') }}" class="row g-2 align-items-center">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Search description, admin name..." value="{{ filter_info.q }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <select name="action" class="form-select">
+                    <option value="all" {% if filter_info.action == 'all' or not filter_info.action %}selected{% endif %}>All Action Types</option>
+                    <option value="SOS_RESOLVED" {% if filter_info.action == 'SOS_RESOLVED' %}selected{% endif %}>SOS_RESOLVED (Emergency Resolved)</option>
+                    <option value="FACILITY_CREATED" {% if filter_info.action == 'FACILITY_CREATED' %}selected{% endif %}>FACILITY_CREATED (Facility Added)</option>
+                    <option value="FACILITY_UPDATED" {% if filter_info.action == 'FACILITY_UPDATED' %}selected{% endif %}>FACILITY_UPDATED (Facility Edited)</option>
+                    <option value="USER_DISABLED" {% if filter_info.action == 'USER_DISABLED' %}selected{% endif %}>USER_DISABLED (User Disabled)</option>
+                    <option value="USER_REACTIVATED" {% if filter_info.action == 'USER_REACTIVATED' %}selected{% endif %}>USER_REACTIVATED (User Reactivated)</option>
+                    <option value="ADMIN_LOGIN" {% if filter_info.action == 'ADMIN_LOGIN' %}selected{% endif %}>ADMIN_LOGIN (Admin Login)</option>
+                    <option value="ADMIN_LOGOUT" {% if filter_info.action == 'ADMIN_LOGOUT' %}selected{% endif %}>ADMIN_LOGOUT (Admin Logout)</option>
+                </select>
+
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-primary fw-semibold flex-grow-1">
+                    <i class="bi bi-funnel-fill me-1"></i> Filter Log
+                </button>
+                {% if filter_info.q or (filter_info.action and filter_info.action != 'all') %}
+                <a href="{{ url_for('admin.admin_activity_list') }}" class="btn btn-outline-secondary">
+                    Clear
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. Audit Activity Table -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold mb-0 text-dark">
+            <i class="bi bi-list-check text-primary me-2"></i>Audit Trail Log Records
+        </h5>
+        <span class="badge bg-light text-dark border">Showing {{ filter_info.showing }} records</span>
+    </div>
+    <div class="card-body p-0">
+        {% if activity_list %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">ID</th>
+                        <th style="width: 170px;">Timestamp</th>
+                        <th>Administrator</th>
+                        <th>Action</th>
+                        <th>Target Entity</th>
+                        <th>Description</th>
+                        <th style="width: 100px;" class="text-end">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in activity_list %}
+                    <tr>
+                        <td class="fw-bold font-monospace text-muted">#{{ a.id }}</td>
+                        <td class="small text-secondary">
+                            <i class="bi bi-clock me-1"></i>{{ a.created_at }}
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark small">{{ a.admin_name }}</div>
+                            {% if a.admin_phone and a.admin_phone != '—' %}
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ a.admin_phone }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.action_type == 'SOS_RESOLVED' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace">
+                                <i class="bi bi-check-circle me-1"></i>SOS_RESOLVED
+                            </span>
+                            {% elif a.action_type == 'FACILITY_CREATED' %}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace">
+                                <i class="bi bi-plus-circle me-1"></i>FACILITY_CREATED
+                            </span>
+                            {% elif a.action_type == 'FACILITY_UPDATED' %}
+                            <span class="badge bg-warning-subtle text-dark border border-warning-subtle font-monospace">
+                                <i class="bi bi-pencil-square me-1"></i>FACILITY_UPDATED
+                            </span>
+                            {% elif a.action_type == 'FACILITY_DELETED' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace">
+                                <i class="bi bi-trash me-1"></i>FACILITY_DELETED
+                            </span>
+                            {% elif a.action_type == 'USER_DISABLED' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace">
+                                <i class="bi bi-person-slash me-1"></i>USER_DISABLED
+                            </span>
+                            {% elif a.action_type == 'USER_REACTIVATED' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace">
+                                <i class="bi bi-person-check me-1"></i>USER_REACTIVATED
+                            </span>
+                            {% elif a.action_type == 'ADMIN_LOGIN' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace">
+                                <i class="bi bi-box-arrow-in-right me-1"></i>ADMIN_LOGIN
+                            </span>
+                            {% elif a.action_type == 'ADMIN_LOGOUT' %}
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle font-monospace">
+                                <i class="bi bi-box-arrow-right me-1"></i>ADMIN_LOGOUT
+                            </span>
+                            {% else %}
+                            <span class="badge bg-light text-dark border font-monospace">{{ a.action_type }}</span>
+                            {% endif %}
+
+                        </td>
+                        <td>
+                            {% if a.entity_type != '—' %}
+                            <span class="badge bg-light text-dark border small">
+                                {{ a.entity_type }} {% if a.entity_id != '—' %}#{{ a.entity_id }}{% endif %}
+                            </span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-dark">{{ a.description }}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#activityDetailsModal_{{ a.id }}">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+
+                    <!-- Details Modal -->
+                    <div class="modal fade" id="activityDetailsModal_{{ a.id }}" tabindex="-1" aria-labelledby="activityModalLabel_{{ a.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <div class="modal-header bg-light">
+                                    <h6 class="modal-title fw-bold" id="activityModalLabel_{{ a.id }}">
+                                        <i class="bi bi-journal-text me-2"></i>Audit Log Record #{{ a.id }}
+                                    </h6>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="text-muted small fw-semibold d-block">ACTION TYPE</label>
+                                        <div class="fw-bold font-monospace">{{ a.action_type }}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small fw-semibold d-block">PERFORMING ADMINISTRATOR</label>
+                                        <div class="fw-semibold text-dark">{{ a.admin_name }} (ID: {{ a.admin_user_id or 'System' }})</div>
+                                        {% if a.admin_phone and a.admin_phone != '—' %}
+                                        <div class="small text-secondary">{{ a.admin_phone }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small fw-semibold d-block">TARGET ENTITY</label>
+                                        <div>{{ a.entity_type }} {% if a.entity_id != '—' %}#{{ a.entity_id }}{% endif %}</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="text-muted small fw-semibold d-block">ACTION DESCRIPTION</label>
+                                        <div class="p-2 bg-light rounded border text-dark">{{ a.description }}</div>
+                                    </div>
+                                    <div class="mb-0">
+                                        <label class="text-muted small fw-semibold d-block">RECORDED TIMESTAMP</label>
+                                        <div class="text-secondary"><i class="bi bi-clock me-1"></i>{{ a.created_at }}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer bg-light py-2">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-journal-check display-4 text-secondary d-block mb-3"></i>
+            <h5>No activity records match the selected filter.</h5>
+            <p class="small text-secondary mb-0">Perform administrative operations or clear your search criteria.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

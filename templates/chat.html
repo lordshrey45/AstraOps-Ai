@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('ai_title') }}{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+
+        <!-- Page Header -->
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <div>
+                <h1 class="page-header mb-0" style="margin-bottom:0;">
+                    <i class="bi bi-chat-dots-fill me-2"></i>{{ t('ai_title') }}
+                </h1>
+                <p class="text-muted mb-0">{{ t('ai_subtitle') }}</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="form-check form-switch mb-0" title="{{ t('auto_read_aloud') }}">
+                    <input class="form-check-input" type="checkbox" role="switch" id="autoReadToggle">
+                    <label class="form-check-label small text-muted fw-semibold" for="autoReadToggle">{{ t('auto_read_aloud') }}</label>
+                </div>
+                <button class="btn btn-outline-secondary btn-sm" id="clearChatBtn" title="{{ t('clear_chat') }}">
+                    <i class="bi bi-trash3 me-1"></i> {{ t('clear_chat') }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="card card-wari">
+            <div class="card-body p-0">
+
+                <!-- Messages Area -->
+                <div class="chat-container" id="chatMessages">
+                    <!-- Welcome message -->
+                    <div class="chat-welcome text-center py-4" id="chatWelcome">
+                        <div class="chat-welcome-icon mb-3">
+                            <i class="bi bi-chat-dots-fill"></i>
+                        </div>
+                        <h5 class="fw-bold">{{ t('ai_welcome_title') }}</h5>
+                        <p class="text-muted mb-3">
+                            {{ t('ai_subtitle') }}
+                        </p>
+
+                        <!-- Suggested Questions -->
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                                    data-question="What is today's Wari schedule?">
+                                <i class="bi bi-calendar3 me-1"></i> {{ t('suggest_schedule') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                                    data-question="Where can I find medical help nearby?">
+                                <i class="bi bi-hospital me-1"></i> {{ t('suggest_medical') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                                    data-question="What facilities are available near the Wari route?">
+                                <i class="bi bi-building me-1"></i> {{ t('suggest_facilities') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                                    data-question="Tell me about the Wari route from Dehu to Pandharpur.">
+                                <i class="bi bi-map me-1"></i> {{ t('suggest_route') }}
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm suggestion-btn"
+                                    data-question="What should I carry for the Wari pilgrimage?">
+                                <i class="bi bi-bag me-1"></i> {{ t('suggest_carry') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Chat history (loaded from backend for authenticated users) -->
+                    {% for entry in history %}
+                    <div class="d-flex justify-content-end mb-2">
+                        <div class="chat-bubble chat-bubble-user">{{ entry.message }}</div>
+                    </div>
+                    <div class="d-flex justify-content-start mb-2">
+                        <div class="chat-bubble chat-bubble-ai">
+                            <div class="ai-text-content">{{ entry.response }}</div>
+                            <button type="button" class="btn btn-sm btn-link text-decoration-none speak-btn py-0 ps-0 pe-2 mt-1"
+                                    title="{{ t('read_aloud') }}" aria-label="{{ t('read_aloud') }}">
+                                <i class="bi bi-volume-up-fill me-1"></i><small class="speak-label">{{ t('read_aloud') }}</small>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator d-none px-3 pb-2" id="typingIndicator">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="spinner-border spinner-border-sm spinner-wari" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <small class="text-muted">{{ t('thinking') }}</small>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="chat-input-area">
+                    <form id="chatForm" class="d-flex gap-2 p-3 border-top align-items-center">
+                        <button type="button" class="btn btn-outline-secondary px-3" id="micBtn"
+                                title="{{ t('voice_input') }}" aria-label="{{ t('voice_input') }}">
+                            <i class="bi bi-mic-fill"></i>
+                        </button>
+                        <input type="text" class="form-control" id="chatInput"
+                               placeholder="{{ t('type_message') }}"
+                               maxlength="2000" autocomplete="off">
+                        <button type="submit" class="btn btn-wari px-3" id="sendBtn"
+                                title="{{ t('send') }}" aria-label="{{ t('send') }}">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </form>
+                    <div class="px-3 pb-2">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            {{ t('demo_data_disclaimer') }}
+                        </small>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/chat.js"></script>
+{% endblock %}

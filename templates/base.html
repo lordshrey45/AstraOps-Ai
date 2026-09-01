@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ t('app_title') }} — {{ t('app_subtitle') }}">
+    <title>{% block title %}{{ t('app_title') }}{% endblock %} | {{ t('app_title') }}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+
+    <!-- Client-Side Translation Helper -->
+    <script>
+        window.CURRENT_LANG = "{{ current_lang }}";
+        window.TRANSLATIONS = {{ translations_json | tojson }};
+        window.t = function(key, defaultVal) {
+            return (window.TRANSLATIONS && window.TRANSLATIONS[key]) || defaultVal || key;
+        };
+    </script>
+
+    {% block head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{% if session.get('is_volunteer') %}/volunteer{% else %}/{% endif %}">
+                <i class="bi bi-geo-alt-fill me-1"></i> {{ t('app_title') }}
+                {% if session.get('is_volunteer') %}
+                <span class="badge bg-light text-primary font-monospace ms-2" style="font-size: 0.72rem;">
+                    <i class="bi bi-person-badge-fill me-1"></i>VOLUNTEER
+                </span>
+                {% endif %}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain" aria-controls="navbarMain" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarMain">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% if session.get('is_volunteer') %}/volunteer{% else %}/{% endif %}"><i class="bi bi-house-fill"></i> {{ t('nav_home') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/map"><i class="bi bi-map-fill"></i> {{ t('nav_map') }}</a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link" href="/chat"><i class="bi bi-chat-dots-fill"></i> {{ t('nav_chat') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/facilities"><i class="bi bi-building"></i> {{ t('nav_facilities') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sos"><i class="bi bi-exclamation-triangle-fill"></i> {{ t('nav_sos') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/schedule"><i class="bi bi-calendar3"></i> {{ t('nav_schedule') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/weather"><i class="bi bi-cloud-sun-fill"></i> {{ t('nav_weather') }}</a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav align-items-lg-center">
+                    {% if session.get('user_id') %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile"><i class="bi bi-person-circle"></i> {{ t('nav_profile') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/api/logout"><i class="bi bi-box-arrow-right"></i> {{ t('nav_logout') }}</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> {{ t('nav_login') }}</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register"><i class="bi bi-person-plus-fill"></i> {{ t('nav_register') }}</a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/about"><i class="bi bi-info-circle-fill"></i> {{ t('nav_about') }}</a>
+                    </li>
+
+                    <!-- Language Selector Dropdown -->
+                    <li class="nav-item dropdown ms-lg-2">
+                        <a class="nav-link dropdown-toggle active fw-semibold border border-light-subtle rounded-pill px-3 py-1 mt-1 mt-lg-0"
+                           href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="languageDropdown">
+                            <i class="bi bi-translate me-1"></i> {{ supported_languages.get(current_lang, 'English') }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="languageDropdown">
+                            <li><a class="dropdown-item {% if current_lang=='en' %}active fw-bold{% endif %}" href="/set_language/en">English</a></li>
+                            <li><a class="dropdown-item {% if current_lang=='mr' %}active fw-bold{% endif %}" href="/set_language/mr">मराठी</a></li>
+                            <li><a class="dropdown-item {% if current_lang=='hi' %}active fw-bold{% endif %}" href="/set_language/hi">हिन्दी</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    <div class="container mt-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Content -->
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer-wari text-center">
+        <div class="container">
+            <p class="mb-1">{{ t('footer_copy') }}</p>
+            <p class="mb-0">
+                <a href="/about">{{ t('nav_about') }}</a> · 
+                <a href="/map">{{ t('nav_map') }}</a> · 
+                <a href="/sos">{{ t('nav_sos') }}</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating SOS Button (visible on all pages) -->
+    <a href="/sos" class="floating-sos" title="{{ t('nav_sos') }}">
+        SOS
+    </a>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Shared JS -->
+    <script src="/static/js/main.js"></script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

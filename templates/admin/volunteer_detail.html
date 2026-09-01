@@ -1,0 +1,283 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Volunteer Profile — {{ volunteer.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-0">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1 small">
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_dashboard') }}">Admin</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('admin.admin_volunteer_list') }}">Volunteers</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ volunteer.name }} (#{{ volunteer.id }})</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold text-dark mb-0">
+                <i class="bi bi-person-badge-fill text-primary me-2"></i>{{ volunteer.name }}
+                {% if volunteer.is_online %}
+                <span class="badge {% if volunteer.availability == 'AVAILABLE' %}bg-success{% elif volunteer.availability == 'BUSY' %}bg-warning text-dark{% else %}bg-secondary{% endif %} fs-6 align-middle ms-2">
+                    {% if volunteer.availability == 'BUSY' %}🟡 BUSY{% else %}🟢 ONLINE{% endif %}
+                </span>
+                {% else %}
+                <span class="badge bg-danger fs-6 align-middle ms-2">
+                    🔴 OFFLINE
+                </span>
+                {% endif %}
+            </h2>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            {% if volunteer.is_online and volunteer.phone %}
+            <!-- Call Action -->
+            <a href="tel:{{ volunteer.phone }}" class="btn btn-outline-success fw-semibold">
+                <i class="bi bi-telephone-fill me-1"></i> Call Volunteer
+            </a>
+            <!-- WhatsApp Action -->
+            <a href="https://wa.me/91{{ volunteer.phone }}?text=Hello%20{{ volunteer.name }}%2C%20this%20is%20Wari%20Mitra%20Control%20Center." target="_blank" rel="noopener noreferrer" class="btn btn-success fw-semibold">
+                <i class="bi bi-whatsapp me-1"></i> WhatsApp
+            </a>
+            {% else %}
+            <span class="badge bg-light text-muted border px-3 py-2 font-monospace" style="font-size: 0.85rem;">
+                <i class="bi bi-telephone-x me-1 text-danger"></i>Contact Unavailable (Offline)
+            </span>
+            {% endif %}
+            <a href="{{ url_for('admin.admin_map') }}" class="btn btn-outline-dark fw-semibold">
+                <i class="bi bi-map-fill me-1"></i> View on Map
+            </a>
+        </div>
+    </div>
+
+    {% if not volunteer.is_online %}
+    <!-- Offline Operational Alert -->
+    <div class="alert alert-danger d-flex align-items-center mb-4 rounded-3 border-danger shadow-sm">
+        <i class="bi bi-exclamation-octagon-fill fs-3 text-danger me-3"></i>
+        <div>
+            <div class="fw-bold fs-6">Volunteer is currently offline and cannot be contacted through the operational contact controls.</div>
+            <div class="small text-muted mt-1">
+                <strong>Last seen:</strong> {{ volunteer.last_seen }} | Contact controls unavailable while offline.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    <!-- Quick Info Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Volunteer Identity & Contact Card -->
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white border-bottom fw-bold text-dark py-3">
+                    <i class="bi bi-person-lines-fill text-primary me-2"></i>Identity &amp; Contact Details
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Volunteer ID:</span>
+                            <span class="fw-bold font-monospace">#{{ volunteer.id }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Full Name:</span>
+                            <span class="fw-bold">{{ volunteer.name }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Registered Phone:</span>
+                            <span class="fw-bold font-monospace">{{ volunteer.phone }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Approval Status:</span>
+                            <span class="badge bg-success">APPROVED</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Account Status:</span>
+                            <span class="badge {% if volunteer.status == 'ACTIVE' %}bg-primary{% else %}bg-secondary{% endif %}">
+                                {{ volunteer.status }}
+                            </span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <span class="text-muted">Member Since:</span>
+                            <span class="text-muted">{{ volunteer.created_at }}</span>
+                        </li>
+                    </ul>
+
+                    <div class="mt-3 pt-3 border-top d-grid gap-2">
+                        <form method="POST" action="{{ url_for('admin.admin_toggle_volunteer_status', volunteer_id=volunteer.id) }}">
+                            <button type="submit" class="btn btn-sm {% if volunteer.status == 'ACTIVE' %}btn-outline-warning{% else %}btn-outline-success{% endif %} w-100">
+                                <i class="bi bi-power me-1"></i>
+                                {% if volunteer.status == 'ACTIVE' %}Set Account Inactive{% else %}Reactivate Volunteer{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Telemetry & GPS Card -->
+        <div class="col-md-6 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white border-bottom fw-bold text-dark py-3">
+                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>Live Location &amp; Telemetry
+                </div>
+                <div class="card-body">
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small">Location Status:</span>
+                            <span class="badge {% if volunteer.freshness == 'LIVE' %}bg-success{% elif volunteer.freshness == 'RECENT' %}bg-primary{% elif volunteer.freshness == 'STALE' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ volunteer.freshness }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small">Duty Availability:</span>
+                            <span class="badge {% if volunteer.availability == 'AVAILABLE' %}bg-success{% elif volunteer.availability == 'BUSY' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                {{ volunteer.availability or 'AVAILABLE' }}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small">GPS Sharing:</span>
+                            <span class="badge {% if volunteer.is_sharing == 1 %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if volunteer.is_sharing == 1 %}SHARING ACTIVE{% else %}SHARING OFF{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small">Last Update:</span>
+                            <span class="text-dark small fw-semibold">{{ volunteer.location_updated_at or 'Never' }}</span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="text-muted small">Coordinates:</span>
+                            <span class="font-monospace small fw-bold">
+                                {% if volunteer.latitude and volunteer.longitude %}
+                                {{ "%.5f"|format(volunteer.latitude) }}, {{ "%.5f"|format(volunteer.longitude) }}
+                                {% else %}
+                                Unavailable
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between">
+                            <span class="text-muted small">Accuracy:</span>
+                            <span class="text-muted small">
+                                {% if volunteer.accuracy %}±{{ volunteer.accuracy|round(1) }} m{% else %}Standard{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if volunteer.latitude and volunteer.longitude %}
+                    <a href="https://maps.google.com/?q={{ volunteer.latitude }},{{ volunteer.longitude }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in Google Maps
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Active Assignment Card -->
+        <div class="col-md-12 col-xl-4">
+            <div class="card border-0 shadow-sm rounded-3 h-100">
+                <div class="card-header bg-white border-bottom fw-bold text-dark py-3">
+                    <i class="bi bi-shield-exclamation text-warning me-2"></i>Current Emergency Assignment
+                </div>
+                <div class="card-body">
+                    {% if current_assignment %}
+                    <div class="p-3 bg-warning-subtle border border-warning rounded-3 mb-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span class="fw-bold text-dark">SOS Incident #{{ current_assignment.sos_id }}</span>
+                            <span class="badge {% if current_assignment.status == 'accepted' %}bg-success{% elif current_assignment.status == 'assigned' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                                {{ current_assignment.status|upper }}
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <strong>Priority:</strong> <span class="text-danger fw-bold">{{ current_assignment.sos_priority }}</span>
+                        </div>
+                        <div class="small text-muted mb-1">
+                            <strong>Pilgrim:</strong> {{ current_assignment.pilgrim_name or 'Anonymous' }} ({{ current_assignment.pilgrim_phone or '—' }})
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <strong>Assigned by:</strong> {{ current_assignment.assigned_by_name or 'Admin' }} at {{ current_assignment.created_at }}
+                        </div>
+                        <div class="small p-2 bg-white rounded border">
+                            <strong>Message:</strong> {{ current_assignment.sos_message or 'No message note.' }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('admin.admin_sos_list') }}?q={{ current_assignment.sos_id }}" class="btn btn-sm btn-outline-dark flex-grow-1">
+                            <i class="bi bi-eye me-1"></i> View SOS #{{ current_assignment.sos_id }}
+                        </a>
+                        <form method="POST" action="{{ url_for('admin.admin_cancel_assignment', assignment_id=current_assignment.id) }}" onsubmit="return confirm('Cancel assignment for this volunteer?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-x-circle me-1"></i> Cancel
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4 text-muted">
+                        <i class="bi bi-check-circle text-success fs-1 mb-2 d-block"></i>
+                        <p class="mb-1 fw-bold">No Active Assignment</p>
+                        <p class="small mb-0">Volunteer is ready to respond to incoming emergency incidents.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignment History Table -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-white border-bottom fw-bold text-dark py-3 d-flex align-items-center justify-content-between">
+            <div>
+                <i class="bi bi-clock-history text-secondary me-2"></i>Emergency Assignment History
+            </div>
+            <span class="badge bg-light text-dark">{{ assignments|length }} Total</span>
+        </div>
+        <div class="card-body p-0">
+            {% if assignments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Assignment ID</th>
+                            <th>SOS #</th>
+                            <th>Priority</th>
+                            <th>Pilgrim</th>
+                            <th>Assigned At</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in assignments %}
+                        <tr>
+                            <td class="font-monospace fw-bold">#{{ a.id }}</td>
+                            <td>
+                                <a href="{{ url_for('admin.admin_sos_list') }}?q={{ a.sos_id }}" class="fw-bold">
+                                    SOS #{{ a.sos_id }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge {% if a.sos_priority == 'CRITICAL' %}bg-danger{% elif a.sos_priority == 'HIGH' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                                    {{ a.sos_priority }}
+                                </span>
+                            </td>
+                            <td>{{ a.pilgrim_name or 'Anonymous' }}</td>
+                            <td>{{ a.created_at }}</td>
+                            <td>
+                                <span class="badge {% if a.status == 'completed' %}bg-success{% elif a.status == 'accepted' %}bg-primary{% elif a.status == 'assigned' %}bg-warning text-dark{% elif a.status == 'declined' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    {{ a.status|upper }}
+                                </span>
+                            </td>
+                            <td class="text-muted">{{ a.notes or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="p-4 text-center text-muted">
+                No past emergency assignments for this volunteer.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
