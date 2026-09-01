@@ -1,0 +1,6 @@
+.env
+__pycache__/
+*.pyc
+database/wari_mitra.db
+venv/
+.vscode/
