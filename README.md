@@ -1,189 +1,96 @@
 # 🚀 AstraOps AI
 
-> An AI-powered operations and intelligence platform designed to simplify complex operational workflows through intelligent automation, real-time insights, and natural-language interaction.
+> **AI-powered operations, safety, and assistance platform for large-scale pilgrimage management.**
+
+AstraOps AI is an intelligent web-based platform designed to improve the safety, coordination, accessibility, and operational management of large-scale pilgrimage events.
+
+The platform combines **Artificial Intelligence, real-time location services, emergency response, facility discovery, weather information, volunteer coordination, multilingual interaction, and operational management** into a single unified system.
 
 ---
 
 ## 🌟 Overview
 
-**AstraOps AI** is an intelligent operations platform that combines **Artificial Intelligence, automation, data processing, and modern web technologies** to help users monitor, analyze, and manage operational information efficiently.
+Large-scale pilgrimages involve thousands of pilgrims, volunteers, administrators, emergency teams, and support facilities operating across large geographical areas.
 
-The platform is designed to reduce manual effort, provide actionable insights, and allow users to interact with operational data using a **natural-language AI assistant**.
+Managing such an environment can create several challenges:
 
-Instead of requiring users to manually search through multiple sources or analyze large amounts of information, AstraOps AI brings important information together and uses AI to transform it into **clear, contextual, and actionable responses**.
+- Finding important facilities quickly
+- Navigating pilgrimage routes
+- Responding to emergencies
+- Coordinating volunteers
+- Accessing weather information
+- Communicating across different languages
+- Managing operational information
+- Providing quick and understandable assistance to pilgrims
 
----
-
-## 🎯 Problem Statement
-
-Modern operational systems often generate large amounts of information that can be difficult to monitor and interpret efficiently.
-
-Users may need to:
-
-- Search through multiple sources of information
-- Analyze operational data manually
-- Identify important events or anomalies
-- Understand complex information quickly
-- Make decisions based on constantly changing data
-- Perform repetitive operational tasks
-
-Traditional systems often provide raw information without sufficient intelligence or context.
-
-### 💡 Our Solution
-
-AstraOps AI acts as an intelligent operational layer that combines:
-
-User
- ↓
-Web Interface
- ↓
-Flask Application
- ↓
-Routes / APIs
- ↓
-Services
- ├── Gemini AI
- ├── Weather
- ├── Location
- ├── Translation
- └── TTS
- ↓
-SQLite Database
-
-The system helps users interact with operational information through an intuitive interface and an AI-powered assistant.
+**AstraOps AI** addresses these challenges by providing a centralized intelligent platform that connects pilgrims, volunteers, and administrators with the information and tools they need.
 
 ---
 
-# ✨ Key Features
+# 🎯 Problem Statement
 
-## 🤖 AI-Powered Assistant
+Large-scale pilgrimage operations generate a huge amount of information related to:
 
-AstraOps AI provides a natural-language interface through which users can ask questions and receive contextual answers.
+- Routes and schedules
+- Pilgrim locations
+- Emergency situations
+- Medical and support facilities
+- Weather conditions
+- Volunteers
+- Operational activities
 
-The assistant can:
+Traditional systems often require users to manually search through different sources to find the required information.
 
-- Understand natural-language queries
-- Analyze available operational information
-- Generate contextual responses
-- Provide actionable recommendations
-- Simplify complex information
-- Support conversational interaction
+This can result in:
 
----
+- Delayed emergency response
+- Difficulty finding nearby facilities
+- Poor coordination between volunteers
+- Limited accessibility
+- Information overload
+- Language barriers
+- Difficulty accessing real-time information
 
-## 🧠 Intelligent Data Processing
-
-The platform processes operational information and converts raw data into meaningful insights.
-
-Key capabilities include:
-
-- Data aggregation
-- Context-aware processing
-- Intelligent filtering
-- Information summarization
-- AI-assisted analysis
-- Decision-support insights
+AstraOps AI provides a unified platform to simplify these operations.
 
 ---
 
-## 📊 Operational Intelligence
+# 💡 Our Solution
 
-AstraOps AI provides a centralized environment for monitoring and understanding operational information.
-
-Users can quickly identify:
-
-- Important operational events
-- Current system information
-- Relevant trends
-- Potential issues
-- Actionable insights
-
----
-
-## ⚡ Automation
-
-The system reduces repetitive manual work by using automated workflows and AI-assisted processing.
-
-Automation helps improve:
-
-- Efficiency
-- Response time
-- Accuracy
-- Consistency
-- Productivity
-
----
-
-## 🔍 Natural Language Search
-
-Users do not need to know complex commands or database queries.
-
-Instead, they can simply ask questions in natural language.
-
-Example:
-
-> "What are the important operational issues right now?"
-
-The AI processes the request and provides an understandable response.
-
----
-
-## 🎙️ Voice Interaction
-
-AstraOps AI can support voice-based interaction, allowing users to communicate with the AI assistant without relying entirely on text input.
-
-This makes the system more natural and accessible.
-
----
-
-## 📱 Modern User Interface
-
-The application provides a modern, responsive interface designed for easy navigation and quick access to important information.
-
-The interface focuses on:
-
-- Simplicity
-- Accessibility
-- Clear information presentation
-- Responsive design
-- User-friendly interaction
-
----
-
-# 🏗️ System Architecture
-
-AstraOps AI follows a modular architecture consisting of multiple layers.
+AstraOps AI acts as an intelligent operational layer between users, services, and operational data.
 
 ```text
-                    ┌─────────────────────┐
-                    │       Users         │
-                    │ Pilgrim / Volunteer │
-                    │      / Admin        │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │   Web Interface     │
-                    │ HTML / CSS / JS      │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                    ┌─────────────────────┐
-                    │    Flask Backend    │
-                    │     Blueprints      │
-                    └──────────┬──────────┘
-                               │
-          ┌────────────────────┼────────────────────┐
-          ▼                    ▼                    ▼
-   ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-   │ AI Services │     │ Safety      │     │ Operations  │
-   │ Gemini      │     │ SOS         │     │ Facilities  │
-   │ TTS         │     │ Location    │     │ Volunteers  │
-   └─────────────┘     └─────────────┘     │ Routes      │
-                                           │ Weather     │
-                                           └──────┬──────┘
-                                                  │
-                                                  ▼
-                                          ┌────────────────┐
-                                          │ SQLite Database│
-                                          └────────────────┘
+                         ┌───────────────────────┐
+                         │        Users          │
+                         │ Pilgrim / Volunteer   │
+                         │        / Admin        │
+                         └───────────┬───────────┘
+                                     │
+                                     ▼
+                         ┌───────────────────────┐
+                         │    Web Interface      │
+                         │     HTML/CSS/JS       │
+                         └───────────┬───────────┘
+                                     │
+                                     ▼
+                         ┌───────────────────────┐
+                         │    Flask Backend      │
+                         │      Blueprints       │
+                         └───────────┬───────────┘
+                                     │
+             ┌───────────────────────┼────────────────────────┐
+             │                       │                        │
+             ▼                       ▼                        ▼
+      ┌──────────────┐       ┌──────────────┐       ┌────────────────┐
+      │ AI Services  │       │ Safety       │       │ Operations     │
+      │ Gemini       │       │ SOS          │       │ Routes         │
+      │ TTS          │       │ Location     │       │ Facilities     │
+      │ Translation  │       │ Emergency    │       │ Volunteers     │
+      └──────────────┘       └──────────────┘       │ Weather        │
+                                                     │ Admin          │
+                                                     └───────┬────────┘
+                                                             │
+                                                             ▼
+                                                   ┌─────────────────┐
+                                                   │ SQLite Database │
+                                                   └─────────────────┘
