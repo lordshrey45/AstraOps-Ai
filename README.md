@@ -2,95 +2,70 @@
 
 > **AI-powered operations, safety, and assistance platform for large-scale pilgrimage management.**
 
-AstraOps AI is an intelligent web-based platform designed to improve the safety, coordination, accessibility, and operational management of large-scale pilgrimage events.
-
-The platform combines **Artificial Intelligence, real-time location services, emergency response, facility discovery, weather information, volunteer coordination, multilingual interaction, and operational management** into a single unified system.
+AstraOps AI is an AI-powered operations, safety, and assistance platform designed to help manage large-scale pilgrimage operations through intelligent assistance, real-time location services, emergency response, facility discovery, weather information, volunteer coordination, and multilingual interaction.
 
 ---
 
 ## 🌟 Overview
 
-Large-scale pilgrimages involve thousands of pilgrims, volunteers, administrators, emergency teams, and support facilities operating across large geographical areas.
+Large-scale pilgrimages involve thousands of people, complex routes, changing weather conditions, emergency situations, facility requirements, and coordination between volunteers and administrators.
 
-Managing such an environment can create several challenges:
+AstraOps AI brings these operational requirements together into a single intelligent platform.
 
-- Finding important facilities quickly
-- Navigating pilgrimage routes
-- Responding to emergencies
-- Coordinating volunteers
-- Accessing weather information
-- Communicating across different languages
-- Managing operational information
-- Providing quick and understandable assistance to pilgrims
+The platform combines:
 
-**AstraOps AI** addresses these challenges by providing a centralized intelligent platform that connects pilgrims, volunteers, and administrators with the information and tools they need.
+- Artificial Intelligence
+- Real-time location services
+- Interactive maps
+- Emergency response
+- Facility discovery
+- Weather information
+- Volunteer coordination
+- Multilingual interaction
+- Voice accessibility
+- Administrative management
+
+The goal is to make pilgrimage operations safer, more accessible, and easier to manage.
 
 ---
 
-# 🎯 Problem Statement
+## 🎯 Problem Statement
 
-Large-scale pilgrimage operations generate a huge amount of information related to:
+Managing large-scale pilgrimage operations can be challenging because users and administrators need to handle:
 
-- Routes and schedules
-- Pilgrim locations
+- Large numbers of pilgrims
+- Route and schedule information
 - Emergency situations
-- Medical and support facilities
+- Nearby facilities
 - Weather conditions
-- Volunteers
-- Operational activities
-
-Traditional systems often require users to manually search through different sources to find the required information.
-
-This can result in:
-
-- Delayed emergency response
-- Difficulty finding nearby facilities
-- Poor coordination between volunteers
-- Limited accessibility
-- Information overload
+- Volunteer coordination
+- Location-based services
 - Language barriers
-- Difficulty accessing real-time information
+- Real-time assistance
 
-AstraOps AI provides a unified platform to simplify these operations.
+Traditional systems often separate these services across different platforms.
+
+AstraOps AI provides a centralized solution that connects these services together.
 
 ---
 
 # 💡 Our Solution
 
-AstraOps AI acts as an intelligent operational layer between users, services, and operational data.
+AstraOps AI provides an integrated platform where users can access operational information and assistance from a single application.
+
+### Core workflow
 
 ```text
-                         ┌───────────────────────┐
-                         │        Users          │
-                         │ Pilgrim / Volunteer   │
-                         │        / Admin        │
-                         └───────────┬───────────┘
-                                     │
-                                     ▼
-                         ┌───────────────────────┐
-                         │    Web Interface      │
-                         │     HTML/CSS/JS       │
-                         └───────────┬───────────┘
-                                     │
-                                     ▼
-                         ┌───────────────────────┐
-                         │    Flask Backend      │
-                         │      Blueprints       │
-                         └───────────┬───────────┘
-                                     │
-             ┌───────────────────────┼────────────────────────┐
-             │                       │                        │
-             ▼                       ▼                        ▼
-      ┌──────────────┐       ┌──────────────┐       ┌────────────────┐
-      │ AI Services  │       │ Safety       │       │ Operations     │
-      │ Gemini       │       │ SOS          │       │ Routes         │
-      │ TTS          │       │ Location     │       │ Facilities     │
-      │ Translation  │       │ Emergency    │       │ Volunteers     │
-      └──────────────┘       └──────────────┘       │ Weather        │
-                                                     │ Admin          │
-                                                     └───────┬────────┘
-                                                             │
-                                                             ▼
-                                                   ┌─────────────────┐
-                                                   │ SQLite Database │
-                                                   └─────────────────┘
+User
+  │
+  ▼
+AstraOps AI Platform
+  │
+  ├── AI Assistant
+  ├── Route & Schedule
+  ├── Facilities
+  ├── Weather
+  ├── Location Services
+  ├── Emergency SOS
+  ├── Volunteer Management
+  └── Multilingual & Voice Support
